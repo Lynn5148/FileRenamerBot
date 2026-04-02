@@ -10,7 +10,7 @@ INTERVAL = 4 * 60 * 60
 # 🔥 MODES
 MODES = {
     "onlyfan": {
-        "channels": [-1001111111111],
+        "channels": [-1003358300432],
         "caption": """🌸 #{name}
 leaked 💠 vip
 
@@ -23,14 +23,13 @@ leaked 💠 vip
 
 #OnlyFans 
 @HeavenFallNetwork 🔞""",
-        "sticker": "STICKER_ID_1"
+        "sticker": "CAACAgQAAxkBAAEDDD5pzuhUXslvg8etKdXgFXl4mky8jQACuRkAAsMKoFEPcfteoU-9zDoE"
     },
 
     "adult": {
         "channels": [
-            -1002222222222,
-            -1003333333333,
-            -1004444444444
+            -1003624513206,
+            -1003339318325
         ],
         "caption": """👤 {name}
 🎥 {company}
@@ -45,6 +44,6 @@ leaked 💠 vip
 {link}
 
 @heavenfallnetwork""",
-        "sticker": "STICKER_ID_2"
+        "sticker": "CAACAgQAAxkBAAEDDD5pzuhUXslvg8etKdXgFXl4mky8jQACuRkAAsMKoFEPcfteoU-9zDoE"
     }
 }
