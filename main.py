@@ -115,12 +115,20 @@ async def text_handler(client, message):
 
         thumb = db.get_thumb(user_id)
 
-        await client.send_document(
-            chat_id=user_id,
-            document=file.document.file_id,
-            file_name=new_name,
-            thumb=thumb
-        )
+        file_path = await client.download_media(file)
+
+ext = file.document.file_name.split(".")[-1]
+new_file = f"{message.text}.{ext}"
+
+os.rename(file_path, new_file)
+
+await client.send_document(
+    chat_id=user_id,
+    document=new_file,
+    thumb=thumb
+)
+
+os.remove(new_file)
 
         db.update_count(user_id)
         user_state.pop(user_id)
@@ -139,16 +147,20 @@ async def text_handler(client, message):
         thumb = db.get_thumb(user_id)
 
         for i, file in enumerate(files, start=1):
-            ext = file.document.file_name.split(".")[-1]
+    file_path = await client.download_media(file)
 
-            new_name = f"[CH{i}] {state['base']}.{ext}"
+    ext = file.document.file_name.split(".")[-1]
+    new_file = f"[CH{i}] {state['base']}.{ext}"
 
-            await client.send_document(
-                chat_id=user_id,
-                document=file.document.file_id,
-                file_name=new_name,
-                thumb=thumb
-            )
+    os.rename(file_path, new_file)
+
+    await client.send_document(
+        chat_id=user_id,
+        document=new_file,
+        thumb=thumb
+    )
+
+    os.remove(new_file)
 
             db.update_count(user_id)
 
