@@ -1,7 +1,9 @@
-API_ID = 36227456
-API_HASH = "e8cac19e5ebfaba297f75db50d221fa9"
-BOT_TOKEN = "your_bot_token"
+import os
 
-FORCE_CHANNEL = -100XXXXXXXXXX  # your channel id
-ADMINS = [your_user_id]
+API_ID = int(os.getenv("API_ID"))
+API_HASH = os.getenv("API_HASH")
+BOT_TOKEN = os.getenv("BOT_TOKEN")
+
+FORCE_CHANNEL = -100XXXXXXXXXX  # your channel ID
+ADMINS = [123456789]  # your Telegram user ID
 DAILY_LIMIT = 10
