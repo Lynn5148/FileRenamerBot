@@ -1,100 +1,41 @@
-from pyrogram import Client, filters
-from pyrogram.types import Message
-import os
+import asyncio
+from datetime import datetime
 
+from pyrogram import Client, filters
 from config import *
 import database as db
 
-app = Client("rename-bot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
+app = Client("bot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
 
-# 🔁 USER STATE
 user_state = {}
 
+# 🎯 COMMANDS
 
-# 🔒 FORCE JOIN
-async def check_join(client, user_id):
-    try:
-        member = await client.get_chat_member(FORCE_CHANNEL, user_id)
-        return True
-    except:
-        return False
+@app.on_message(filters.command("onlyfan"))
+async def onlyfan(client, message):
+    user_state[message.from_user.id] = {"mode": "onlyfan", "step": "video"}
+    await message.reply("Send video")
 
+@app.on_message(filters.command("adult"))
+async def adult(client, message):
+    user_state[message.from_user.id] = {"mode": "adult", "step": "video"}
+    await message.reply("Send video")
 
-# 🏁 START
-@app.on_message(filters.command("start"))
-async def start(client, message):
-    joined = await check_join(client, message.from_user.id)
-
-    if not joined:
-        return await message.reply("Join channel first to use bot.")
-
-    await message.reply("Send /rename or /renameall")
-
-
-# 🖼️ SET THUMBNAIL
-@app.on_message(filters.command("setthumb") & filters.photo)
-async def set_thumb(client, message):
-    file_id = message.photo.file_id
-    db.set_thumb(message.from_user.id, file_id)
-    await message.reply("Thumbnail saved!")
-
-
-# 🔁 SINGLE MODE
-@app.on_message(filters.command("rename"))
-async def rename_cmd(client, message):
-    user_state[message.from_user.id] = {"mode": "single", "expected": "file"}
-    await message.reply("Send file to rename")
-
-
-# 📦 BATCH MODE
-@app.on_message(filters.command("renameall"))
-async def rename_all(client, message):
-    user_state[message.from_user.id] = {
-        "mode": "batch",
-        "files": [],
-        "expected": "files"
-    }
-    await message.reply("Send multiple files, then type /done")
-
-
-# 🛑 DONE (Batch)
-@app.on_message(filters.command("done"))
-async def done(client, message):
-    state = user_state.get(message.from_user.id)
-
-    if not state or state["mode"] != "batch":
-        return
-
-    if not state["files"]:
-        return await message.reply("No files added")
-
-    state["expected"] = "name"
-    await message.reply("Send base name")
-
-
-# 📥 FILE HANDLER
-@app.on_message(filters.document | filters.video | filters.audio)
-async def file_handler(client, message):
+# 📥 VIDEO
+@app.on_message(filters.video)
+async def video_handler(client, message):
     user_id = message.from_user.id
     state = user_state.get(user_id)
 
-    if not state:
+    if not state or state["step"] != "video":
         return
 
-    # SINGLE
-    if state["mode"] == "single":
-        state["file"] = message
-        state["expected"] = "name"
-        await message.reply("Send new name")
+    state["video"] = message.video.file_id
+    state["step"] = "link"
+    await message.reply("Send link")
 
-    # BATCH
-    elif state["mode"] == "batch" and state["expected"] == "files":
-        state["files"].append(message)
-        await message.reply(f"Added {len(state['files'])} file(s)")
-
-
-# 🏷️ TEXT HANDLER
-@app.on_message(filters.text & ~filters.command(["start","rename","renameall","done"]))
+# 🔗 LINK + NAME + COMPANY
+@app.on_message(filters.text)
 async def text_handler(client, message):
     user_id = message.from_user.id
     state = user_state.get(user_id)
@@ -102,74 +43,102 @@ async def text_handler(client, message):
     if not state:
         return
 
-    # SINGLE NAME
-    if state["mode"] == "single" and state["expected"] == "name":
+    if state["step"] == "link":
+        state["link"] = message.text
+        state["step"] = "name"
+        await message.reply("Send name")
 
-        if not db.can_rename(user_id, 1, DAILY_LIMIT):
-            return await message.reply("Daily limit reached.")
+    elif state["step"] == "name":
+        state["name"] = message.text
 
-        file = state["file"]
-        ext = file.document.file_name.split(".")[-1]
+        if state["mode"] == "adult":
+            state["step"] = "company"
+            await message.reply("Send company")
+        else:
+            state["step"] = "thumb"
+            await message.reply("Send thumbnail")
 
-        new_name = f"{message.text}.{ext}"
+    elif state["step"] == "company":
+        state["company"] = message.text
+        state["step"] = "thumb"
+        await message.reply("Send thumbnail")
 
-        thumb = db.get_thumb(user_id)
+# 🖼️ THUMBNAIL → SAVE QUEUE
+@app.on_message(filters.photo)
+async def thumb_handler(client, message):
+    user_id = message.from_user.id
+    state = user_state.get(user_id)
 
-        file_path = await client.download_media(file)
+    if not state or state["step"] != "thumb":
+        return
 
-ext = file.document.file_name.split(".")[-1]
-new_file = f"{message.text}.{ext}"
+    state["thumb"] = message.photo.file_id
 
-os.rename(file_path, new_file)
+    # ⏱️ SCHEDULING
+    last_time = db.get_last_time()
 
-await client.send_document(
-        chat_id=user_id,
-        document=new_path
-    )
+    if last_time:
+        post_time = last_time + INTERVAL
+    else:
+        post_time = datetime.now().timestamp()
 
-    os.remove(new_path)
+    db.add_post((
+        state["mode"],
+        state["video"],
+        state["link"],
+        state["name"],
+        state.get("company", ""),
+        state["thumb"],
+        post_time,
+        "pending"
+    ))
 
-    db.update_count(user_id)
+    await message.reply(f"Queued ✅")
 
-except Exception as e:
-    print(e)
-    await message.reply(f"Error: {e}")
-
-finally:
     user_state.pop(user_id, None)
 
-    # BATCH NAME
-    elif state["mode"] == "batch" and state["expected"] == "name":
-        state["base"] = message.text
-        state["expected"] = "rename"
+# 🔄 SCHEDULER
+async def scheduler():
+    while True:
+        now = datetime.now().timestamp()
+        posts = db.get_pending()
 
-        files = state["files"]
+        for post in posts:
+            post_id, mode, video, link, name, company, thumb, post_time, status = post
 
-        if not db.can_rename(user_id, len(files), DAILY_LIMIT):
-            return await message.reply("Limit exceeded.")
+            if post_time <= now:
+                mode_data = MODES[mode]
 
-        thumb = db.get_thumb(user_id)
+                caption = mode_data["caption"].format(
+                    name=name,
+                    link=link,
+                    company=company
+                )
 
-        for i, file in enumerate(files, start=1):
-    file_path = await client.download_media(file)
+                for ch in mode_data["channels"]:
+                    await app.send_video(
+                        chat_id=ch,
+                        video=video,
+                        caption=caption,
+                        thumb=thumb
+                    )
 
-    ext = file.document.file_name.split(".")[-1]
-    new_file = f"[CH{i}] {state['base']}.{ext}"
+                    await asyncio.sleep(1)
 
-    os.rename(file_path, new_file)
+                    await app.send_sticker(
+                        chat_id=ch,
+                        sticker=mode_data["sticker"]
+                    )
 
-    await client.send_document(
-        chat_id=user_id,
-        document=new_file,
-        thumb=thumb
-    )
+                db.mark_done(post_id)
 
-    os.remove(new_file)
+        await asyncio.sleep(10)
 
-            db.update_count(user_id)
+# ▶️ START
+async def main():
+    await app.start()
+    asyncio.create_task(scheduler())
+    print("Bot Running...")
+    await asyncio.Event().wait()
 
-        await message.reply("Done ✅")
-        user_state.pop(user_id)
-
-
-app.run()
+app.run(main())
