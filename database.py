@@ -1,64 +1,44 @@
 import sqlite3
-from datetime import date
+from datetime import datetime
 
-conn = sqlite3.connect("users.db", check_same_thread=False)
+conn = sqlite3.connect("queue.db", check_same_thread=False)
 cur = conn.cursor()
 
 cur.execute("""
-CREATE TABLE IF NOT EXISTS users (
-    user_id INTEGER PRIMARY KEY,
-    is_premium INTEGER DEFAULT 0,
-    rename_count INTEGER DEFAULT 0,
-    last_reset TEXT,
-    thumb TEXT
+CREATE TABLE IF NOT EXISTS posts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    mode TEXT,
+    video TEXT,
+    link TEXT,
+    name TEXT,
+    company TEXT,
+    thumb TEXT,
+    post_time REAL,
+    status TEXT
 )
 """)
 conn.commit()
 
 
-def get_user(user_id):
-    cur.execute("SELECT * FROM users WHERE user_id=?", (user_id,))
-    user = cur.fetchone()
-
-    if not user:
-        cur.execute("INSERT INTO users (user_id, last_reset) VALUES (?, ?)",
-                    (user_id, str(date.today())))
-        conn.commit()
-        return get_user(user_id)
-
-    return user
-
-
-def update_count(user_id):
-    today = str(date.today())
-    user = get_user(user_id)
-
-    if user[3] != today:
-        cur.execute("UPDATE users SET rename_count=0, last_reset=? WHERE user_id=?",
-                    (today, user_id))
-        conn.commit()
-
-    cur.execute("UPDATE users SET rename_count = rename_count + 1 WHERE user_id=?",
-                (user_id,))
+def add_post(data):
+    cur.execute("""
+    INSERT INTO posts (mode, video, link, name, company, thumb, post_time, status)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    """, data)
     conn.commit()
 
 
-def can_rename(user_id, amount, limit):
-    user = get_user(user_id)
-    is_premium = user[1]
-    count = user[2]
-
-    if is_premium:
-        return True
-
-    return count + amount <= limit
+def get_pending():
+    cur.execute("SELECT * FROM posts WHERE status='pending'")
+    return cur.fetchall()
 
 
-def set_thumb(user_id, file_id):
-    cur.execute("UPDATE users SET thumb=? WHERE user_id=?", (file_id, user_id))
+def mark_done(post_id):
+    cur.execute("UPDATE posts SET status='done' WHERE id=?", (post_id,))
     conn.commit()
 
 
-def get_thumb(user_id):
-    cur.execute("SELECT thumb FROM users WHERE user_id=?", (user_id,))
-    return cur.fetchone()[0] 
+def get_last_time():
+    cur.execute("SELECT post_time FROM posts ORDER BY post_time DESC LIMIT 1")
+    res = cur.fetchone()
+    return res[0] if res else None
