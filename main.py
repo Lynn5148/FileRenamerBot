@@ -123,16 +123,20 @@ new_file = f"{message.text}.{ext}"
 os.rename(file_path, new_file)
 
 await client.send_document(
-    chat_id=user_id,
-    document=new_file,
-    thumb=thumb
-)
+        chat_id=user_id,
+        document=new_path
+    )
 
-os.remove(new_file)
+    os.remove(new_path)
 
-        db.update_count(user_id)
-        user_state.pop(user_id)
+    db.update_count(user_id)
 
+except Exception as e:
+    print(e)
+    await message.reply(f"Error: {e}")
+
+finally:
+    user_state.pop(user_id, None)
 
     # BATCH NAME
     elif state["mode"] == "batch" and state["expected"] == "name":
