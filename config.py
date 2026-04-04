@@ -43,5 +43,24 @@ leaked 💠 vip
 
 @heavenfallnetwork""",
         "sticker": "CAACAgQAAxkBAAEDDD5pzuhUXslvg8etKdXgFXl4mky8jQACuRkAAsMKoFEPcfteoU-9zDoE"
+    },
+
+    # ✅ NEW MODE (DOUJINSHI)
+    "doujinshi": {
+        "channels": [-100XXXXXXXXXX],  # replace with your channel
+        "caption": """{name}
+
+» Nᴏ.ᴏғ Pᴀɢᴇs: {pages}
+» Tʏᴘᴇ: #doujinshi
+» Lᴀɴɢᴜᴀɢᴇ: #english 
+» Fᴏʀᴍᴀᴛ : PDF
+» Tᴀɢs: #mature, #artstyle, #adult, #Hardcore, #Corn #Heavenfallnetwork
+
+══════════════════
+📌 <a href="{link}">Download | Read Now 📚</a>
+📌 <a href="{link}">Download | Read Now 📚</a>
+📌 <a href="{link}">Download | Read Now 📚</a>
+══════════════════
+Provided by @HeavenFallNetwork"""
     }
 }
