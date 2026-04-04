@@ -14,12 +14,11 @@ MODES = {
         "caption": """🌸 #{name}
 leaked 💠 vip
 
-⬇️ Download file
-{link}
-{link}
-{link}
+⬇️ <a href="{link}">Download file</a>
+⬇️ <a href="{link}">Download file</a>
+⬇️ <a href="{link}">Download file</a>
                    
-#{name}
+{name}
 
 #OnlyFans 
 @HeavenFallNetwork 🔞""",
