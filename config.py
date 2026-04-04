@@ -9,7 +9,7 @@ INTERVAL = 4 * 60 * 60
 
 # 🔥 MODES
 MODES = {
-    "onlyfan": {
+    "onlyfans": {
         "channels": [-1003358300432],
         "caption": """🌸 #{name}
 leaked 💠 vip
