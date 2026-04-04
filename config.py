@@ -47,7 +47,7 @@ leaked 💠 vip
 
     # ✅ NEW MODE (DOUJINSHI)
     "doujinshi": {
-        "channels": [-100XXXXXXXXXX],  # replace with your channel
+        "channels": [-1003853835138],  # replace with your channel
         "caption": """{name}
 
 » Nᴏ.ᴏғ Pᴀɢᴇs: {pages}
