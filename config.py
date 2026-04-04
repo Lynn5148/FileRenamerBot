@@ -37,10 +37,9 @@ leaked 💠 vip
 
 #HardCore #adult
 
-🔗 Download media
-{link}
-{link}
-{link}
+🔗 <a href="{link}">Download file</a>
+🔗 <a href="{link}">Download file</a>
+🔗 <a href="{link}">Download file</a>
 
 @heavenfallnetwork""",
         "sticker": "CAACAgQAAxkBAAEDDD5pzuhUXslvg8etKdXgFXl4mky8jQACuRkAAsMKoFEPcfteoU-9zDoE"
