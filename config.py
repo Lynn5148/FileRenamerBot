@@ -4,24 +4,24 @@ API_ID = int(os.getenv("API_ID"))
 API_HASH = os.getenv("API_HASH")
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 
-# 🔁 Interval in seconds (4 hours)
+# ðŸ” Interval in seconds (4 hours)
 INTERVAL = 4 * 60 * 60
 
-# 🔥 MODES
+# ðŸ”¥ MODES
 MODES = {
     "onlyfans": {
         "channels": [-1003358300432],
-        "caption": """🌸 {name}
-leaked 💠 vip
+        "caption": """ðŸŒ¸ {name}
+leaked ðŸ’  vip
 
-⬇️ <a href="{link}">Download file</a>
-⬇️ <a href="{link}">Download file</a>
-⬇️ <a href="{link}">Download file</a>
+â¬‡ï¸ <a href="{link}">Download file</a>
+â¬‡ï¸ <a href="{link}">Download file</a>
+â¬‡ï¸ <a href="{link}">Download file</a>
                    
-ㅤㅤㅤㅤㅤㅤ{name}
+ã…¤ã…¤ã…¤ã…¤ã…¤ã…¤{name}
 
 #OnlyFans 
-@HeavenFallNetwork 🔞""",
+@HeavenFallNetwork ðŸ”ž""",
         "sticker": "CAACAgQAAxkBAAEDDD5pzuhUXslvg8etKdXgFXl4mky8jQACuRkAAsMKoFEPcfteoU-9zDoE"
     },
 
@@ -30,37 +30,18 @@ leaked 💠 vip
             -1003624513206,
             -1003339318325
         ],
-        "caption": """👤 {name}
-🎥 {company}
+        "caption": """ðŸ‘¤ {name}
+ðŸŽ¥ {company}
 
-🗓 2025 🔥
+ðŸ—“ 2025 ðŸ”¥
 
 #HardCore #adult
 
-🔗 <a href="{link}">Download file</a>
-🔗 <a href="{link}">Download file</a>
-🔗 <a href="{link}">Download file</a>
+ðŸ”— <a href="{link}">Download file</a>
+ðŸ”— <a href="{link}">Download file</a>
+ðŸ”— <a href="{link}">Download file</a>
 
 @heavenfallnetwork""",
         "sticker": "CAACAgQAAxkBAAEDDD5pzuhUXslvg8etKdXgFXl4mky8jQACuRkAAsMKoFEPcfteoU-9zDoE"
-    },
-
-    # ✅ NEW MODE (DOUJINSHI)
-    "doujinshi": {
-        "channels": [-1003853835138],  # replace with your channel
-        "caption": """{name}
-
-» Nᴏ.ᴏғ Pᴀɢᴇs: {pages}
-» Tʏᴘᴇ: #doujinshi
-» Lᴀɴɢᴜᴀɢᴇ: #english 
-» Fᴏʀᴍᴀᴛ : PDF
-» Tᴀɢs: #mature, #artstyle, #adult, #Hardcore, #Corn #Heavenfallnetwork
-
-══════════════════
-📌 <a href="{link}">Download | Read Now 📚</a>
-📌 <a href="{link}">Download | Read Now 📚</a>
-📌 <a href="{link}">Download | Read Now 📚</a>
-══════════════════
-Provided by @HeavenFallNetwork"""
     }
 }
