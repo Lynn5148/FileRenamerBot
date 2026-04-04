@@ -89,9 +89,10 @@ async def text_handler(client, message):
         )
 
         await message.reply_photo(
-            photo=state["photo"],
-            caption=caption,
-            parse_mode="html"
+    photo=state["photo"],
+    caption=caption,
+    parse_mode="html"
+       
         )
 
         user_state.pop(user_id, None)
