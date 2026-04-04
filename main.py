@@ -10,7 +10,7 @@ user_state = {}
 
 @app.on_message(filters.command("onlyfans"))
 async def onlyfan(client, message):
-    user_state[message.from_user.id] = {"mode": "onlyfan", "step": "photo"}
+    user_state[message.from_user.id] = {"mode": "onlyfans", "step": "photo"}
     await message.reply("Send photo")
 
 @app.on_message(filters.command("adult"))
@@ -76,3 +76,6 @@ async def text_handler(client, message):
         )
 
         user_state.pop(user_id, None)
+
+print("Bot Started...")
+app.run()
