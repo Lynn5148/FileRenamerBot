@@ -7,7 +7,7 @@ app = Client("bot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
 
 user_state = {}
 
-# ðŸŽ¯ MODE SELECT
+# 🎯 MODE SELECT
 
 @app.on_message(filters.command("onlyfans"))
 async def onlyfan(client, message):
@@ -20,7 +20,7 @@ async def adult(client, message):
     await message.reply("Send photo")
 
 
-# ðŸ–¼ï¸ PHOTO
+# 🖼️ PHOTO
 
 @app.on_message(filters.photo)
 async def photo_handler(client, message):
@@ -35,7 +35,7 @@ async def photo_handler(client, message):
     await message.reply("Send name")
 
 
-# ðŸ”¤ TEXT HANDLER
+# 🔤 TEXT HANDLER
 
 @app.on_message(filters.text & ~filters.command(["onlyfans", "adult"]))
 async def text_handler(client, message):
@@ -67,24 +67,25 @@ async def text_handler(client, message):
 
         caption = mode_data["caption"].format(
             name=state["name"],
-            link=state["link"],
             company=state.get("company", "")
         )
 
+        # 🔥 BUTTONS
         buttons = InlineKeyboardMarkup(
-        [
+            [
                 [InlineKeyboardButton("🔥 Click To Watch", url=state["link"])],
                 [InlineKeyboardButton("📢 Main Channel", url="https://t.me/HeavenFallNetwork")]
             ]
         )
 
         await message.reply_photo(
-    photo=state["photo"],
-    caption=caption,
-    parse_mode="html",
-    reply_markup=buttons
-    )
+            photo=state["photo"],
+            caption=caption,
+            reply_markup=buttons
+        )
+
         user_state.pop(user_id, None)
+
 
 print("Bot Started...")
 app.run()
