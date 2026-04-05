@@ -73,8 +73,8 @@ async def text_handler(client, message):
         # 🔥 BUTTONS
         buttons = InlineKeyboardMarkup(
             [
-                [InlineKeyboardButton("🔥 Click To Watch", url=state["link"])],
-                [InlineKeyboardButton("📢 Main Channel", url="https://t.me/HeavenFallNetwork")]
+                [InlineKeyboardButton("🔗 𝗖𝗟𝗜𝗖𝗞 𝗧𝗢 𝗪𝗔𝗧𝗖𝗛", url=state["link"])],
+                [InlineKeyboardButton("📢 𝗠𝗔𝗜𝗡 𝗖𝗛𝗔𝗡𝗡𝗘𝗟", url="https://t.me/HeavenFallNetwork")]
             ]
         )
 
