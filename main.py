@@ -1,6 +1,7 @@
 import asyncio
 from pyrogram import Client, filters
 from config import *
+from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 app = Client("bot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
 
