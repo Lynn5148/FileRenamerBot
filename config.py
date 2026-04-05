@@ -8,14 +8,17 @@ BOT_TOKEN = os.getenv("BOT_TOKEN")
 MODES = {
     "onlyfans": {
         "channels": [-1003358300432],
-        "caption": """🌸 {name}
-leaked 💠 vip
+        "caption": "caption": """🌸 {name}
 
-{name}
+💠 Exclusive VIP Content  
+Carefully curated premium drop  
 
-#OnlyFans 
-@HeavenFallNetwork 🔞"""
-    },
+━━━━━━━━━━━━━━
+Tap the button below to access
+━━━━━━━━━━━━━━
+
+#OnlyFans  
+@HeavenFallNetwork 🔞""",
 
     "adult": {
         "channels": [
