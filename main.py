@@ -69,6 +69,8 @@ async def text_handler(client, message):
             link=state["link"],
             company=state.get("company", "")
         )
+
+        buttons = InlineKeyboardMarkup(
         [
                 [InlineKeyboardButton("🔥 Click To Watch", url=state["link"])],
                 [InlineKeyboardButton("📢 Main Channel", url="https://t.me/HeavenFallNetwork")]
