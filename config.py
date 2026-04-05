@@ -18,8 +18,7 @@ Tap the button below to access
 ━━━━━━━━━━━━━━
 
 #OnlyFans  
-@HeavenFallNetwork 🔞""",
-
+@HeavenFallNetwork 🔞"""},
     "adult": {
         "channels": [
             -1003624513206,
