@@ -5,16 +5,19 @@ from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 app = Client("bot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
 
+# 🔥 ADMIN FILTER
+ADMIN_FILTER = filters.user(ADMINS)
+
 user_state = {}
 
 # 🎯 MODE SELECT
 
-@app.on_message(filters.command("onlyfans"))
+@app.on_message(filters.command("onlyfans") & ADMIN_FILTER)
 async def onlyfan(client, message):
     user_state[message.from_user.id] = {"mode": "onlyfans", "step": "photo"}
     await message.reply("Send photo")
 
-@app.on_message(filters.command("adult"))
+@app.on_message(filters.command("adult") & ADMIN_FILTER)
 async def adult(client, message):
     user_state[message.from_user.id] = {"mode": "adult", "step": "photo"}
     await message.reply("Send photo")
@@ -22,7 +25,7 @@ async def adult(client, message):
 
 # 🖼️ PHOTO
 
-@app.on_message(filters.photo)
+@app.on_message(filters.photo & ADMIN_FILTER)
 async def photo_handler(client, message):
     user_id = message.from_user.id
     state = user_state.get(user_id)
@@ -37,7 +40,7 @@ async def photo_handler(client, message):
 
 # 🔤 TEXT HANDLER
 
-@app.on_message(filters.text & ~filters.command(["onlyfans", "adult"]))
+@app.on_message(filters.text & ~filters.command(["onlyfans", "adult"]) & ADMIN_FILTER)
 async def text_handler(client, message):
     user_id = message.from_user.id
     state = user_state.get(user_id)
