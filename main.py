@@ -69,12 +69,18 @@ async def text_handler(client, message):
             link=state["link"],
             company=state.get("company", "")
         )
-
-        await message.reply_photo(
-            photo=state["photo"],
-            caption=caption
+        [
+                [InlineKeyboardButton("🔥 Click To Watch", url=state["link"])],
+                [InlineKeyboardButton("📢 Main Channel", url="https://t.me/HeavenFallNetwork")]
+            ]
         )
 
+        await message.reply_photo(
+    photo=state["photo"],
+    caption=caption,
+    parse_mode="html",
+    reply_markup=buttons
+    )
         user_state.pop(user_id, None)
 
 print("Bot Started...")
