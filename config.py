@@ -7,7 +7,7 @@ BOT_TOKEN = os.getenv("BOT_TOKEN")
 ADMINS = [1893428612, 2117537421]
 
 # 📢 Sticker ID jo har post ke baad jayega
-STICKER_ID = "CAACAgQAAxkBAAEDDD5pzuhUXslvg8etKdXgFXl4mky8jQACuRkAAsMKoFEPcfteoU-9zDoE" # <-- Yahan apna Sticker File ID dalo
+STICKER_ID = "CAACAgUAAxkBAAEDFxhp066Jt1ctY6DWotJo-dtv1Y4CKAAC0RoAAmSv8FfeFY0gJCkIIDsE" # <-- Yahan apna Sticker File ID dalo
 
 # 📡 Target Channels
 CHANNELS = {
