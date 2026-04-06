@@ -99,6 +99,54 @@ async def select_channel(client, callback_query):
     await callback_query.message.edit_text(f"✅ Added to Queue for **{target['name']}**.\nTotal posts in queue: {len(queue)}")
     user_state.pop(user_id, None)
 
+# 🚀 PROCESS QUEUE (Auto-Loop Fixed)
+@app.on_message(filters.command("post") & ADMIN_FILTER)
+async def process_queue(client, message):
+    global stop_posting, is_posting
+    
+    if is_posting:
+        await message.reply("⏳ Ek session pehle se chal raha hai. Agar phas gaya hai toh `/clearall` karo.")
+        return
+
+    queue = load_queue()
+    if not queue:
+        await message.reply("📭 Queue khali hai!")
+        return
+
+    is_posting = True
+    stop_posting = False
+    await message.reply(f"🚀 Auto-Posting started! (Interval: 4 Hours)\nUse `/stop` to halt.")
+    
+    while queue and not stop_posting:
+        post = queue.pop(0)
+        save_queue(queue)
+        
+        buttons = InlineKeyboardMarkup([[InlineKeyboardButton("🔗 𝗖𝗟𝗜𝗖𝗞 𝗧𝗢 𝗪𝗔𝗧𝗖𝗛", url=post["link"])], [InlineKeyboardButton("📢 𝗠𝗔𝗜𝗡 𝗖𝗛𝗔𝗡𝗡𝗘𝗟", url="https://t.me/HeavenFallNetwork")]])
+
+        try:
+            await client.send_photo(chat_id=post["chat_id"], photo=post["photo"], caption=post["caption"], reply_markup=buttons)
+            await client.send_sticker(chat_id=post["chat_id"], sticker=STICKER_ID)
+        except Exception as e:
+            await message.reply(f"❌ Error in posting: {e}")
+
+        # Check again before sleeping
+        if queue and not stop_posting:
+            await asyncio.sleep(4 * 3600)
+        else:
+            break
+
+    is_posting = False
+    await message.reply("🏁 Posting process stopped/finished.")
+
+# 💥 CLEAR ALL (Force Reset)
+@app.on_message(filters.command("clearall") & ADMIN_FILTER)
+async def clear_all_queue(client, message):
+    global stop_posting, is_posting
+    stop_posting = True # Loop todne ke liye
+    is_posting = False  # Lock hatane ke liye
+    save_queue([])      # Data saaf karne ke liye
+    await message.reply("💥 **Queue Purged & Logic Reset!**\nAb aap naye posts add karke `/post` chala sakte hain.")
+
 # ⚡ SEND NOW (Manual Push)
 @app.on_message(filters.command("sendnow") & ADMIN_FILTER)
 async def send_now(client, message):
@@ -122,10 +170,7 @@ async def push_callback(client, callback_query):
     post = queue.pop(0)
     save_queue(queue)
 
-    buttons = InlineKeyboardMarkup([
-        [InlineKeyboardButton("🔗 𝗖𝗟𝗜𝗖𝗞 𝗧𝗢 𝗪𝗔𝗧𝗖𝗛", url=post["link"])],
-        [InlineKeyboardButton("📢 𝗠𝗔𝗜𝗡 𝗖𝗛𝗔𝗡𝗡𝗘𝗟", url="https://t.me/HeavenFallNetwork")]
-    ])
+    buttons = InlineKeyboardMarkup([[InlineKeyboardButton("🔗 𝗖𝗟𝗜𝗖𝗞 𝗧𝗢 𝗪𝗔𝗧𝗖𝗛", url=post["link"])], [InlineKeyboardButton("📢 𝗠𝗔𝗜𝗡 𝗖𝗛𝗔𝗡𝗡𝗘𝗟", url="https://t.me/HeavenFallNetwork")]])
 
     try:
         await client.send_photo(chat_id=target_id, photo=post["photo"], caption=post["caption"], reply_markup=buttons)
@@ -133,40 +178,6 @@ async def push_callback(client, callback_query):
         await callback_query.message.edit_text(f"✅ Post pushed manually to **{CHANNELS[channel_key]['name']}**!")
     except Exception as e:
         await callback_query.message.edit_text(f"❌ Error: {e}")
-
-# 🚀 PROCESS QUEUE (Auto-Loop)
-@app.on_message(filters.command("post") & ADMIN_FILTER)
-async def process_queue(client, message):
-    global stop_posting, is_posting
-    queue = load_queue()
-    if not queue:
-        await message.reply("📭 Queue khali hai!")
-        return
-    if is_posting:
-        await message.reply("⏳ Ek session pehle se chal raha hai.")
-        return
-
-    is_posting = True
-    stop_posting = False
-    await message.reply(f"🚀 Auto-Posting started! (Interval: 4 Hours)\nUse `/stop` to halt.")
-    
-    while queue:
-        if stop_posting: break
-        post = queue.pop(0)
-        save_queue(queue)
-        buttons = InlineKeyboardMarkup([[InlineKeyboardButton("🔗 𝗖𝗟𝗜𝗖𝗞 𝗧𝗢 𝗪𝗔𝗧𝗖𝗛", url=post["link"])], [InlineKeyboardButton("📢 𝗠𝗔𝗜𝗡 𝗖𝗛𝗔𝗡𝗡𝗘𝗟", url="https://t.me/HeavenFallNetwork")]])
-
-        try:
-            await client.send_photo(chat_id=post["chat_id"], photo=post["photo"], caption=post["caption"], reply_markup=buttons)
-            await client.send_sticker(chat_id=post["chat_id"], sticker=STICKER_ID)
-        except Exception as e:
-            await message.reply(f"❌ Error in posting: {e}")
-
-        if queue and not stop_posting:
-            await asyncio.sleep(4 * 3600)
-
-    is_posting = False
-    await message.reply("🏁 Batch process complete.")
 
 # 📋 VIEW/STATUS/STOP
 @app.on_message(filters.command("view") & ADMIN_FILTER)
@@ -193,24 +204,12 @@ async def delete_item(client, callback_query):
 async def stop_cmd(client, message):
     global stop_posting
     stop_posting = True
-    await message.reply("🛑 Stop signal received.")
+    await message.reply("🛑 Stop signal received. Agla interval nahi chalega.")
 
 @app.on_message(filters.command("status") & ADMIN_FILTER)
 async def status_cmd(client, message):
     queue = load_queue()
-    await message.reply(f"📊 Queue Size: {len(queue)} posts.")
-
-# 💥 CLEAR ALL COMMAND
-@app.on_message(filters.command("clearall") & ADMIN_FILTER)
-async def clear_all_queue(client, message):
-    global stop_posting, is_posting
-    stop_posting = True
-    is_posting = False
-    try:
-        save_queue([]) 
-        await message.reply("💥 **Queue Fully Purged!**\n\n- All pending posts deleted.\n- Active posting cycle stopped.")
-    except Exception as e:
-        await message.reply(f"❌ Error clearing queue: {e}")
+    await message.reply(f"📊 Queue Size: {len(queue)} posts.\nPosting Active: {is_posting}")
 
 print("Bot is Alive...")
 app.run()
