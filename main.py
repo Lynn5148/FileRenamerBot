@@ -45,7 +45,7 @@ async def photo_handler(client, message):
     await message.reply("🏷️ Send Name:")
 
 # 🔤 TEXT HANDLER
-@app.on_message(filters.text & ~filters.command(["onlyfans", "adult", "post", "stop", "view", "status", "sendnow"]) & ADMIN_FILTER)
+@app.on_message(filters.text & ~filters.command(["onlyfans", "adult", "post", "stop", "view", "status", "sendnow", "clearall"]) & ADMIN_FILTER)
 async def text_handler(client, message):
     user_id = message.from_user.id
     state = user_state.get(user_id)
@@ -106,8 +106,6 @@ async def send_now(client, message):
     if not queue:
         await message.reply("📭 Queue is empty.")
         return
-
-    # Create buttons to choose which channel to push to right now
     btn_list = [[InlineKeyboardButton(v["name"], callback_data=f"push_{k}")] for k, v in CHANNELS.items()]
     await message.reply("🚀 **Manual Push:** Send the oldest queued post to which channel?", 
                        reply_markup=InlineKeyboardMarkup(btn_list))
@@ -121,8 +119,6 @@ async def push_callback(client, callback_query):
 
     channel_key = callback_query.data.split("_")[1]
     target_id = CHANNELS[channel_key]["id"]
-    
-    # Take the first post
     post = queue.pop(0)
     save_queue(queue)
 
@@ -203,6 +199,18 @@ async def stop_cmd(client, message):
 async def status_cmd(client, message):
     queue = load_queue()
     await message.reply(f"📊 Queue Size: {len(queue)} posts.")
+
+# 💥 CLEAR ALL COMMAND
+@app.on_message(filters.command("clearall") & ADMIN_FILTER)
+async def clear_all_queue(client, message):
+    global stop_posting, is_posting
+    stop_posting = True
+    is_posting = False
+    try:
+        save_queue([]) 
+        await message.reply("💥 **Queue Fully Purged!**\n\n- All pending posts deleted.\n- Active posting cycle stopped.")
+    except Exception as e:
+        await message.reply(f"❌ Error clearing queue: {e}")
 
 print("Bot is Alive...")
 app.run()
