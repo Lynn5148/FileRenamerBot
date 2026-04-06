@@ -4,39 +4,21 @@ API_ID = int(os.getenv("API_ID"))
 API_HASH = os.getenv("API_HASH")
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 
-ADMINS = [1893428612,2117537421]
+ADMINS = [1893428612, 2117537421]
+
+# 📢 Target Channels for Selection
+CHANNELS = {
+    "1": {"name": "OnlyFans Main", "id": -1003358300432},
+    "2": {"name": "Adult Main 1", "id": -1003624513206},
+    "3": {"name": "Adult Main 2", "id": -1003339318325}
+}
+
 # 🔥 MODES
 MODES = {
     "onlyfans": {
-        "channels": [-1003358300432],
-        "caption": """🌸 {name}
-
-💠 Exclusive VIP Content  
-Carefully curated premium drop  
-
-━━━━━━━━━━━━━━
-Tap the button below to access
-━━━━━━━━━━━━━━
-
-#OnlyFans  
-@HeavenFallNetwork 🔞"""
+        "caption": """🌸 {name}\n\n💠 Exclusive VIP Content\nCarefully curated premium drop\n\n━━━━━━━━━━━━━━\nTap the button below to access\n━━━━━━━━━━━━━━\n\n#OnlyFans\n@HeavenFallNetwork 🔞"""
     },
-
     "adult": {
-        "channels": [
-            -1003624513206,
-            -1003339318325
-        ],
-        "caption": """🎬 {company}
-
-👤 Featuring: {name}
-
-━━━━━━━━━━━━━━
-💠 Premium Release  
-Access via button below
-━━━━━━━━━━━━━━
-
-#Adult  
-@HeavenFallNetwork 🔞"""
+        "caption": """🎬 {company}\n\n👤 Featuring: {name}\n\n━━━━━━━━━━━━━━\n💠 Premium Release\nAccess via button below\n━━━━━━━━━━━━━━\n\n#Adult\n@HeavenFallNetwork 🔞"""
     }
 }
