@@ -45,7 +45,7 @@ async def photo_handler(client, message):
     await message.reply("🏷️ Send Name:")
 
 # 🔤 TEXT HANDLER
-@app.on_message(filters.text & ~filters.command(["onlyfans", "adult", "post", "stop", "view", "status"]) & ADMIN_FILTER)
+@app.on_message(filters.text & ~filters.command(["onlyfans", "adult", "post", "stop", "view", "status", "sendnow"]) & ADMIN_FILTER)
 async def text_handler(client, message):
     user_id = message.from_user.id
     state = user_state.get(user_id)
@@ -99,7 +99,46 @@ async def select_channel(client, callback_query):
     await callback_query.message.edit_text(f"✅ Added to Queue for **{target['name']}**.\nTotal posts in queue: {len(queue)}")
     user_state.pop(user_id, None)
 
-# 🚀 PROCESS QUEUE (With Sticker + 4hr Gap)
+# ⚡ SEND NOW (Manual Push)
+@app.on_message(filters.command("sendnow") & ADMIN_FILTER)
+async def send_now(client, message):
+    queue = load_queue()
+    if not queue:
+        await message.reply("📭 Queue is empty.")
+        return
+
+    # Create buttons to choose which channel to push to right now
+    btn_list = [[InlineKeyboardButton(v["name"], callback_data=f"push_{k}")] for k, v in CHANNELS.items()]
+    await message.reply("🚀 **Manual Push:** Send the oldest queued post to which channel?", 
+                       reply_markup=InlineKeyboardMarkup(btn_list))
+
+@app.on_callback_query(filters.regex(r"^push_"))
+async def push_callback(client, callback_query):
+    queue = load_queue()
+    if not queue:
+        await callback_query.answer("Queue is empty!", show_alert=True)
+        return
+
+    channel_key = callback_query.data.split("_")[1]
+    target_id = CHANNELS[channel_key]["id"]
+    
+    # Take the first post
+    post = queue.pop(0)
+    save_queue(queue)
+
+    buttons = InlineKeyboardMarkup([
+        [InlineKeyboardButton("🔗 𝗖𝗟𝗜𝗖𝗞 𝗧𝗢 𝗪𝗔𝗧𝗖𝗛", url=post["link"])],
+        [InlineKeyboardButton("📢 𝗠𝗔𝗜𝗡 𝗖𝗛𝗔𝗡𝗡𝗘𝗟", url="https://t.me/HeavenFallNetwork")]
+    ])
+
+    try:
+        await client.send_photo(chat_id=target_id, photo=post["photo"], caption=post["caption"], reply_markup=buttons)
+        await client.send_sticker(chat_id=target_id, sticker=STICKER_ID)
+        await callback_query.message.edit_text(f"✅ Post pushed manually to **{CHANNELS[channel_key]['name']}**!")
+    except Exception as e:
+        await callback_query.message.edit_text(f"❌ Error: {e}")
+
+# 🚀 PROCESS QUEUE (Auto-Loop)
 @app.on_message(filters.command("post") & ADMIN_FILTER)
 async def process_queue(client, message):
     global stop_posting, is_posting
@@ -113,47 +152,37 @@ async def process_queue(client, message):
 
     is_posting = True
     stop_posting = False
-    await message.reply(f"🚀 Posting started! (Interval: 4 Hours)\nUse `/stop` to halt.")
+    await message.reply(f"🚀 Auto-Posting started! (Interval: 4 Hours)\nUse `/stop` to halt.")
     
     while queue:
         if stop_posting: break
-        
         post = queue.pop(0)
         save_queue(queue)
-        
-        buttons = InlineKeyboardMarkup([
-            [InlineKeyboardButton("🔗 𝗖𝗟𝗜𝗖𝗞 𝗧𝗢 𝗪𝗔𝗧𝗖𝗛", url=post["link"])],
-            [InlineKeyboardButton("📢 𝗠𝗔𝗜𝗡 𝗖𝗛𝗔𝗡𝗡𝗘𝗟", url="https://t.me/HeavenFallNetwork")]
-        ])
+        buttons = InlineKeyboardMarkup([[InlineKeyboardButton("🔗 𝗖𝗟𝗜𝗖𝗞 𝗧𝗢 𝗪𝗔𝗧𝗖𝗛", url=post["link"])], [InlineKeyboardButton("📢 𝗠𝗔𝗜𝗡 𝗖𝗛𝗔𝗡𝗡𝗘𝗟", url="https://t.me/HeavenFallNetwork")]])
 
         try:
-            # Send Photo
             await client.send_photo(chat_id=post["chat_id"], photo=post["photo"], caption=post["caption"], reply_markup=buttons)
-            # Send Sticker
             await client.send_sticker(chat_id=post["chat_id"], sticker=STICKER_ID)
         except Exception as e:
             await message.reply(f"❌ Error in posting: {e}")
 
         if queue and not stop_posting:
-            await asyncio.sleep(4 * 3600) # 4 Hours sleep
+            await asyncio.sleep(4 * 3600)
 
     is_posting = False
     await message.reply("🏁 Batch process complete.")
 
-# 📋 VIEW/DELETE QUEUE
+# 📋 VIEW/STATUS/STOP
 @app.on_message(filters.command("view") & ADMIN_FILTER)
 async def view_queue(client, message):
     queue = load_queue()
     if not queue:
         await message.reply("📭 Queue is empty.")
         return
-    
     text = "📂 **Queue List (Tap to Delete):**\n\n"
-    btns = []
+    btns = [[InlineKeyboardButton(f"❌ Delete {i+1}", callback_data=f"del_{i}")] for i, item in enumerate(queue)]
     for i, item in enumerate(queue):
         text += f"{i+1}. {item['caption'][:25]}...\n"
-        btns.append([InlineKeyboardButton(f"❌ Delete {i+1}", callback_data=f"del_{i}")])
-    
     await message.reply(text, reply_markup=InlineKeyboardMarkup(btns))
 
 @app.on_callback_query(filters.regex(r"^del_"))
@@ -161,18 +190,14 @@ async def delete_item(client, callback_query):
     idx = int(callback_query.data.split("_")[1])
     queue = load_queue()
     if idx < len(queue):
-        queue.pop(idx)
-        save_queue(queue)
-        await callback_query.answer("🗑️ Deleted!")
-        await view_queue(client, callback_query.message)
-    else:
-        await callback_query.answer("Already deleted.")
+        queue.pop(idx); save_queue(queue)
+        await callback_query.answer("🗑️ Deleted!"); await view_queue(client, callback_query.message)
 
 @app.on_message(filters.command("stop") & ADMIN_FILTER)
 async def stop_cmd(client, message):
     global stop_posting
     stop_posting = True
-    await message.reply("🛑 Stop signal received. Agla post nahi hoga.")
+    await message.reply("🛑 Stop signal received.")
 
 @app.on_message(filters.command("status") & ADMIN_FILTER)
 async def status_cmd(client, message):
