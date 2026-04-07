@@ -115,7 +115,7 @@ async def posting_logic(client, message):
                 await message.reply(f"❌ Error in posting: {e}")
 
             if queue:
-                await asyncio.sleep(4 * 3600) # 4 Hours
+                await asyncio.sleep(2 * 3600) # 2 Hours
             else:
                 break
         await message.reply("🏁 All posts from queue have been sent.")
@@ -138,7 +138,7 @@ async def start_post(client, message):
         await message.reply("📭 Queue is empty.")
         return
     
-    await message.reply("🚀 Starting Auto-Post (4hr intervals)...")
+    await message.reply("🚀 Starting Auto-Post (2hr intervals)...")
     posting_task = asyncio.create_task(posting_logic(client, message))
 
 # 💥 CLEAR ALL (The Absolute Fix)
