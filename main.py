@@ -58,7 +58,6 @@ async def text_handler(client, message):
     m = state["mode"]
     s = state["step"]
 
-    # --- INDIAN MODE ---
     if m == "indian":
         if s == "description":
             state["description"] = message.text; state["step"] = "duration"
@@ -70,7 +69,6 @@ async def text_handler(client, message):
             state["link"] = message.text; state["step"] = "channel"
             await message.reply("📡 Select channel:", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("Indian", callback_data="sel_5")]]))
 
-    # --- CORNHWA MODE ---
     elif m == "cornhwa":
         if s == "name":
             state["name"] = message.text; state["step"] = "status"
@@ -85,7 +83,6 @@ async def text_handler(client, message):
             state["link"] = message.text; state["step"] = "channel"
             await message.reply("📡 Select channel:", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("Cornhwa", callback_data="sel_6")]]))
 
-    # --- DOUJINSHI MODE ---
     elif m == "doujinshi":
         if s == "name":
             state["name"] = message.text; state["step"] = "pages"
@@ -97,7 +94,6 @@ async def text_handler(client, message):
             state["link"] = message.text; state["step"] = "channel"
             await message.reply("📡 Select channel:", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("Doujinshi", callback_data="sel_7")]]))
 
-    # --- ADULT & ONLYFANS MODE ---
     else:
         if s == "name":
             state["name"] = message.text
@@ -110,15 +106,13 @@ async def text_handler(client, message):
             await message.reply("🔗 Send Link:")
         elif s == "link":
             state["link"] = message.text; state["step"] = "channel"
-            
             if m == "adult":
                 btns = [[InlineKeyboardButton(CHANNELS[i]["name"], callback_data=f"sel_{i}")] for i in ["2", "3", "4"]]
             elif m == "onlyfans":
                 btns = [[InlineKeyboardButton("OnlyFans", callback_data="sel_1")]]
-                
             await message.reply("📡 Select channel:", reply_markup=InlineKeyboardMarkup(btns))
 
-# 🔘 CALLBACK (Channel Select & Save to Queue)
+# 🔘 CALLBACK (Save to Queue)
 @app.on_callback_query(filters.regex(r"^sel_"))
 async def select_channel(client, callback_query):
     user_id = callback_query.from_user.id
@@ -129,7 +123,6 @@ async def select_channel(client, callback_query):
     target = CHANNELS[channel_key]
     m = state["mode"]
     
-    # Format caption dynamically based on mode
     if m == "indian":
         caption = MODES["indian"]["caption"].format(description=state["description"], duration=state["duration"])
     elif m == "cornhwa":
@@ -145,26 +138,23 @@ async def select_channel(client, callback_query):
         "photo": state["photo"],
         "caption": caption,
         "link": state["link"],
-        "mode": m  # Save mode to determine button text later
+        "mode": m
     })
     save_queue(queue)
 
     await callback_query.message.edit_text(f"✅ Added to Queue for **{target['name']}**.\nTotal posts: {len(queue)}")
     user_state.pop(user_id, None)
 
-# 🚀 POSTING LOGIC (Background Task)
+# 🚀 POSTING LOGIC
 async def posting_logic(client, message):
     try:
         while True:
-            queue = load_queue() # Reload inside loop to catch new posts
+            queue = load_queue()
             if not queue: break
-            
             post = queue.pop(0)
             save_queue(queue)
             
-            # Dynamic Button Logic
             btn_text = "📖 𝗥𝗘𝗔𝗗 𝗡𝗢𝗪" if post.get("mode") in ["cornhwa", "doujinshi"] else "🔗 𝗖𝗟𝗜𝗖𝗞 𝗧𝗢 𝗪𝗔𝗧𝗖𝗛"
-            
             buttons = InlineKeyboardMarkup([
                 [InlineKeyboardButton(btn_text, url=post["link"])], 
                 [InlineKeyboardButton("📢 𝗠𝗔𝗜𝗡 𝗖𝗛𝗔𝗡𝗡𝗘𝗟", url="https://t.me/HeavenFallNetwork")]
@@ -174,15 +164,15 @@ async def posting_logic(client, message):
                 await client.send_photo(chat_id=post["chat_id"], photo=post["photo"], caption=post["caption"], reply_markup=buttons)
                 await client.send_sticker(chat_id=post["chat_id"], sticker=STICKER_ID)
             except Exception as e:
-                await message.reply(f"❌ Error in posting: {e}")
+                await message.reply(f"❌ Error: {e}")
 
-            if load_queue(): # Re-check if queue still has items before sleeping
-                await asyncio.sleep(2 * 3600) # 2 Hours
+            if load_queue():
+                await asyncio.sleep(2 * 3600)
             else:
                 break
-        await message.reply("🏁 All posts from queue have been sent.")
+        await message.reply("🏁 All posts sent.")
     except asyncio.CancelledError:
-        await message.reply("🛑 Posting session forcibly stopped.")
+        await message.reply("🛑 Posting stopped.")
     finally:
         global posting_task
         posting_task = None
@@ -191,68 +181,51 @@ async def posting_logic(client, message):
 async def start_post(client, message):
     global posting_task
     if posting_task:
-        await message.reply("⏳ Session already running! Use `/clearall` to reset.")
-        return
-    
-    queue = load_queue()
-    if not queue:
-        await message.reply("📭 Queue is empty.")
-        return
-    
-    await message.reply("🚀 Starting Auto-Post (2hr intervals)...")
+        await message.reply("⏳ Already running."); return
+    if not load_queue():
+        await message.reply("📭 Empty."); return
+    await message.reply("🚀 Starting Auto-Post...")
     posting_task = asyncio.create_task(posting_logic(client, message))
 
-# 💥 CLEAR ALL (The Absolute Fix)
+# 💥 CLEAR ALL
 @app.on_message(filters.command("clearall") & ADMIN_FILTER)
 async def clear_all_queue(client, message):
     global posting_task
-    
-    if posting_task:
-        posting_task.cancel()
-        posting_task = None
-    
-    save_queue([])
-    user_state.clear()
-    
-    await message.reply("💥 **SYSTEM RESET COMPLETE**\n- Queue wiped.\n- Active timers killed.\n- All states cleared.")
+    if posting_task: posting_task.cancel(); posting_task = None
+    save_queue([]); user_state.clear()
+    await message.reply("💥 **SYSTEM RESET COMPLETE**")
 
-# ⚡ SEND NOW & OTHER CMDS
+# ⚡ SEND NOW (Direct Push - Fix Applied Here)
 @app.on_message(filters.command("sendnow") & ADMIN_FILTER)
 async def send_now(client, message):
     queue = load_queue()
     if not queue:
         await message.reply("📭 Queue is empty.")
         return
-    btn_list = [[InlineKeyboardButton(v["name"], callback_data=f"push_{k}")] for k, v in CHANNELS.items()]
-    await message.reply("🚀 Push oldest post to:", reply_markup=InlineKeyboardMarkup(btn_list))
-
-@app.on_callback_query(filters.regex(r"^push_"))
-async def push_callback(client, callback_query):
-    queue = load_queue()
-    if not queue: return
-    channel_key = callback_query.data.split("_")[1]
-    post = queue.pop(0); save_queue(queue)
     
-    # Dynamic Button Logic for Manual Push
+    # Sabse purani post uthao
+    post = queue.pop(0)
+    save_queue(queue)
+    
     btn_text = "📖 𝗥𝗘𝗔𝗗 𝗡𝗢𝗪" if post.get("mode") in ["cornhwa", "doujinshi"] else "🔗 𝗖𝗟𝗜𝗖𝗞 𝗧𝗢 𝗪𝗔𝗧𝗖𝗛"
-    
     buttons = InlineKeyboardMarkup([
         [InlineKeyboardButton(btn_text, url=post["link"])], 
         [InlineKeyboardButton("📢 𝗠𝗔𝗜𝗡 𝗖𝗛𝗔𝗡𝗡𝗘𝗟", url="https://t.me/HeavenFallNetwork")]
     ])
-    
+
     try:
-        await client.send_photo(chat_id=CHANNELS[channel_key]["id"], photo=post["photo"], caption=post["caption"], reply_markup=buttons)
-        await client.send_sticker(chat_id=CHANNELS[channel_key]["id"], sticker=STICKER_ID)
-        await callback_query.message.edit_text("✅ Pushed!")
-    except Exception as e: 
-        await callback_query.message.edit_text(f"❌ Error: {e}")
+        # Seedha wahi bhejo jo queue me save tha
+        await client.send_photo(chat_id=post["chat_id"], photo=post["photo"], caption=post["caption"], reply_markup=buttons)
+        await client.send_sticker(chat_id=post["chat_id"], sticker=STICKER_ID)
+        await message.reply("✅ **Sent Now!** Seedha channel pe bhej diya gaya.")
+    except Exception as e:
+        await message.reply(f"❌ Error: {e}")
 
 @app.on_message(filters.command("view") & ADMIN_FILTER)
 async def view_queue(client, message):
     queue = load_queue()
-    if not queue: await message.reply("📭 Queue is empty."); return
-    text = "📂 **Queue:**\n\n"; btns = [[InlineKeyboardButton(f"❌ Del {i+1}", callback_data=f"del_{i}")] for i, item in enumerate(queue)]
+    if not queue: await message.reply("📭 Empty."); return
+    text = "📂 **Queue:**\n\n"; btns = [[InlineKeyboardButton(f"❌ Del {i+1}", callback_data=f"del_{i}")] for i in range(len(queue))]
     for i, item in enumerate(queue): text += f"{i+1}. {item['caption'][:25]}...\n"
     await message.reply(text, reply_markup=InlineKeyboardMarkup(btns))
 
