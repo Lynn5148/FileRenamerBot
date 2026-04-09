@@ -35,6 +35,6 @@ MODES = {
         "caption": "**{name} | HeavenFall Cornhwa |**\n\n┏━━━━━━━━━━━━━━━┓\n\n‣ Type : CORNHWA\n‣ Average Rating : 99\n‣ Status : {status}\n‣ No of chapters : {chapters}\n‣ Genres : Drama, Hentai, Romance\n\n┗━━━━━━━━━━━━━━━┛\n**❖ CLICK ON READ NOW BUTTON ❖**\n▬▬▬▬▬▬▬▬▬▬▬▬▬\n﻿\nProvided by @HeavenFallNetwork\n\n[#MustRead #recommended]"
     },
     "doujinshi": {
-        "caption": "**{name} | HeavenFallNetwork |**\n\n» Nᴏ.ᴏғ Pᴀɢᴇs: {pages}\n» Tʏᴘᴇ: #doujinshi\n» Lᴀɴɢᴜᴀɢᴇ: #english \n» Tᴀɢs: #heavenfallnetwork #mature #adult #doujinshi \n\n═════════════════════\nProvided by @HeavenFallNetwork\n═════════════════════"
+        "caption": "**{name} | HeavenFallNetwork |**\n\n» Nᴏ.ᴏғ Pᴀɢᴇs: {pages}\n» Tʏᴘᴇ: #doujinshi\n» Lᴀɴɢᴜᴀɢᴇ: #english \n» Tᴀɢs: #heavenfallnetwork #mature #adult #doujinshi \n\n════════════════════\nProvided by @HeavenFallNetwork\n════════════════════"
     }
 }
