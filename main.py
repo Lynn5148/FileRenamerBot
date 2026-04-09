@@ -167,7 +167,7 @@ async def posting_logic(client, message):
                 await message.reply(f"❌ Error: {e}")
 
             if load_queue():
-                await asyncio.sleep(2 * 3600)
+                await asyncio.sleep(1 * 3600)
             else:
                 break
         await message.reply("🏁 All posts sent.")
