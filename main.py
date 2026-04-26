@@ -12,7 +12,6 @@ user_state = {}
 posting_task = None  
 DB_FILE = "queue_db.json"
 
-# 🛠️ Database Helpers
 def load_queue():
     if os.path.exists(DB_FILE):
         try:
@@ -25,14 +24,12 @@ def save_queue(queue):
     with open(DB_FILE, "w") as f:
         json.dump(queue, f, indent=4)
 
-# 🎯 UNIVERSAL START COMMAND
 @app.on_message(filters.command(list(MODES.keys())) & ADMIN_FILTER)
 async def start_creation(client, message):
     mode = message.command[0].lower()
     user_state[message.from_user.id] = {"mode": mode, "step": "photo"}
     await message.reply(f"🚀 **{mode.upper()} Mode Activated**\n📸 Send the photo now.")
 
-# 🖼️ PHOTO HANDLER
 @app.on_message(filters.photo & ADMIN_FILTER)
 async def photo_handler(client, message):
     user_id = message.from_user.id
@@ -44,11 +41,13 @@ async def photo_handler(client, message):
     if state["mode"] == "indian":
         state["step"] = "description"
         await message.reply("📝 Send Description:")
+    elif state["mode"] == "publicchannel":
+        state["step"] = "name"
+        await message.reply("🏷️ Send Name/Description:")
     else:
         state["step"] = "name"
         await message.reply("🏷️ Send Name:")
 
-# 🔤 TEXT HANDLER
 @app.on_message(filters.text & ~filters.command(list(MODES.keys()) + ["post", "stop", "view", "status", "sendnow", "clearall"]) & ADMIN_FILTER)
 async def text_handler(client, message):
     user_id = message.from_user.id
@@ -68,6 +67,14 @@ async def text_handler(client, message):
         elif s == "link":
             state["link"] = message.text; state["step"] = "channel"
             await message.reply("📡 Select channel:", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("Indian", callback_data="sel_5")]]))
+
+    elif m == "publicchannel":
+        if s == "name":
+            state["description"] = message.text; state["step"] = "link"
+            await message.reply("🔗 Send Link:")
+        elif s == "link":
+            state["link"] = message.text; state["step"] = "channel"
+            await message.reply("📡 Select channel:", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("Anime Hindi Dub", callback_data="sel_8")]]))
 
     elif m == "cornhwa":
         if s == "name":
@@ -112,7 +119,6 @@ async def text_handler(client, message):
                 btns = [[InlineKeyboardButton("OnlyFans", callback_data="sel_1")]]
             await message.reply("📡 Select channel:", reply_markup=InlineKeyboardMarkup(btns))
 
-# 🔘 CALLBACK (Save to Queue)
 @app.on_callback_query(filters.regex(r"^sel_"))
 async def select_channel(client, callback_query):
     user_id = callback_query.from_user.id
@@ -125,6 +131,8 @@ async def select_channel(client, callback_query):
     
     if m == "indian":
         caption = MODES["indian"]["caption"].format(description=state["description"], duration=state["duration"])
+    elif m == "publicchannel":
+        caption = MODES["publicchannel"]["caption"].format(description=state["description"])
     elif m == "cornhwa":
         caption = MODES["cornhwa"]["caption"].format(name=state["name"], status=state["status"], chapters=state["chapters"])
     elif m == "doujinshi":
@@ -145,7 +153,6 @@ async def select_channel(client, callback_query):
     await callback_query.message.edit_text(f"✅ Added to Queue for **{target['name']}**.\nTotal posts: {len(queue)}")
     user_state.pop(user_id, None)
 
-# 🚀 POSTING LOGIC
 async def posting_logic(client, message):
     try:
         while True:
@@ -187,7 +194,6 @@ async def start_post(client, message):
     await message.reply("🚀 Starting Auto-Post...")
     posting_task = asyncio.create_task(posting_logic(client, message))
 
-# 💥 CLEAR ALL
 @app.on_message(filters.command("clearall") & ADMIN_FILTER)
 async def clear_all_queue(client, message):
     global posting_task
@@ -195,7 +201,6 @@ async def clear_all_queue(client, message):
     save_queue([]); user_state.clear()
     await message.reply("💥 **SYSTEM RESET COMPLETE**")
 
-# ⚡ SEND NOW (Direct Push - Fix Applied Here)
 @app.on_message(filters.command("sendnow") & ADMIN_FILTER)
 async def send_now(client, message):
     queue = load_queue()
@@ -203,7 +208,6 @@ async def send_now(client, message):
         await message.reply("📭 Queue is empty.")
         return
     
-    # Sabse purani post uthao
     post = queue.pop(0)
     save_queue(queue)
     
@@ -214,7 +218,6 @@ async def send_now(client, message):
     ])
 
     try:
-        # Seedha wahi bhejo jo queue me save tha
         await client.send_photo(chat_id=post["chat_id"], photo=post["photo"], caption=post["caption"], reply_markup=buttons)
         await client.send_sticker(chat_id=post["chat_id"], sticker=STICKER_ID)
         await message.reply("✅ **Sent Now!** Seedha channel pe bhej diya gaya.")
