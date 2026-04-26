@@ -6,10 +6,8 @@ BOT_TOKEN = os.getenv("BOT_TOKEN")
 
 ADMINS = [1893428612,2117537421,8607152118]
 
-# 📢 Sticker ID jo har post ke baad jayega
 STICKER_ID = "CAACAgUAAxkBAAEDFxhp066Jt1ctY6DWotJo-dtv1Y4CKAAC0RoAAmSv8FfeFY0gJCkIIDsE"
 
-# 📡 All Target Channels
 CHANNELS = {
     "1": {"name": "OnlyFans", "id": -1003358300432},
     "2": {"name": "CornHub", "id": -1003624513206},
@@ -17,10 +15,10 @@ CHANNELS = {
     "4": {"name": "Milfy", "id": -1003668604630},
     "5": {"name": "Indian", "id": -1003840146959},
     "6": {"name": "Cornhwa", "id": -1003376886471},
-    "7": {"name": "Doujinshi", "id": -1003853835138}
+    "7": {"name": "Doujinshi", "id": -1003853835138},
+    "8": {"name": "Anime Hindi Dub", "id": -1001502396648}
 }
 
-# 🔥 Caption Templates
 MODES = {
     "onlyfans": {
         "caption": "🌸 {name}\n\n💠 Exclusive VIP Content\nCarefully curated premium drop\n\n━━━━━━━━━━━━━━\nTap the button below to access\n━━━━━━━━━━━━━━\n\n#OnlyFans\n@HeavenFallNetwork 🔞"
@@ -36,5 +34,8 @@ MODES = {
     },
     "doujinshi": {
         "caption": "**{name} | HeavenFallNetwork |**\n\n» Nᴏ.ᴏғ Pᴀɢᴇs: {pages}\n» Tʏᴘᴇ: #doujinshi\n» Lᴀɴɢᴜᴀɢᴇ: #english \n» Tᴀɢs: #heavenfallnetwork #mature #adult #doujinshi \n\n════════════════════\nProvided by @HeavenFallNetwork\n════════════════════"
+    },
+    "publicchannel": {
+        "caption": "🌸 {description}\n\n💠 Exclusive VIP Content\nCarefully curated premium drop\n\n━━━━━━━━━━━━━━\nTap the button below to access\n━━━━━━━━━━━━━━\n\n#corn #free\n@HeavenFallNetwork"
     }
 }
