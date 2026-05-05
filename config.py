@@ -16,7 +16,7 @@ CHANNELS = {
     "5": {"name": "Indian", "id": -1003840146959},
     "6": {"name": "Cornhwa", "id": -1003376886471},
     "7": {"name": "Doujinshi", "id": -1003853835138},
-    "8": {"name": "Anime Hindi Dub", "id": -1001502396648}
+    "8": {"name": "Cosplay", "id": -1001502396648}
 }
 
 MODES = {
@@ -35,7 +35,7 @@ MODES = {
     "doujinshi": {
         "caption": "**{name} | HeavenFallNetwork |**\n\n» Nᴏ.ᴏғ Pᴀɢᴇs: {pages}\n» Tʏᴘᴇ: #doujinshi\n» Lᴀɴɢᴜᴀɢᴇ: #english \n» Tᴀɢs: #heavenfallnetwork #mature #adult #doujinshi \n\n════════════════════\nProvided by @HeavenFallNetwork\n════════════════════"
     },
-    "publicchannel": {
-        "caption": "🌸 {description}\n\n💠 Exclusive VIP Content\nCarefully curated premium drop\n\n━━━━━━━━━━━━━━\nTap the button below to access\n━━━━━━━━━━━━━━\n\n#corn #free\n@HeavenFallNetwork"
+    "Cosplay": {
+        "caption": "🌸 {description}\n\n💠 Exclusive COSPLAY Content\nCarefully curated premium drop\n\n━━━━━━━━━━━━━━\nTap the button below to access\n━━━━━━━━━━━━━━\n\n#corn #cosplay\n@HeavenFallNetwork"
     }
 }
