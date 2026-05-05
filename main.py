@@ -41,7 +41,7 @@ async def photo_handler(client, message):
     if state["mode"] == "indian":
         state["step"] = "description"
         await message.reply("📝 Send Description:")
-    elif state["mode"] == "publicchannel":
+    elif state["mode"] == "cosplay":
         state["step"] = "name"
         await message.reply("🏷️ Send Name/Description:")
     else:
