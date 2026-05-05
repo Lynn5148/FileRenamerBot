@@ -68,13 +68,13 @@ async def text_handler(client, message):
             state["link"] = message.text; state["step"] = "channel"
             await message.reply("📡 Select channel:", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("Indian", callback_data="sel_5")]]))
 
-    elif m == "publicchannel":
+    elif m == "Cosplay":
         if s == "name":
             state["description"] = message.text; state["step"] = "link"
             await message.reply("🔗 Send Link:")
         elif s == "link":
             state["link"] = message.text; state["step"] = "channel"
-            await message.reply("📡 Select channel:", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("Anime Hindi Dub", callback_data="sel_8")]]))
+            await message.reply("📡 Select channel:", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("Cosplay Channel", callback_data="sel_8")]]))
 
     elif m == "cornhwa":
         if s == "name":
@@ -132,7 +132,7 @@ async def select_channel(client, callback_query):
     if m == "indian":
         caption = MODES["indian"]["caption"].format(description=state["description"], duration=state["duration"])
     elif m == "publicchannel":
-        caption = MODES["publicchannel"]["caption"].format(description=state["description"])
+        caption = MODES["Cosplay"]["caption"].format(description=state["description"])
     elif m == "cornhwa":
         caption = MODES["cornhwa"]["caption"].format(name=state["name"], status=state["status"], chapters=state["chapters"])
     elif m == "doujinshi":
