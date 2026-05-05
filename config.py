@@ -16,7 +16,7 @@ CHANNELS = {
     "5": {"name": "Indian", "id": -1003840146959},
     "6": {"name": "Cornhwa", "id": -1003376886471},
     "7": {"name": "Doujinshi", "id": -1003853835138},
-    "8": {"name": "Cosplay", "id": -1001502396648}
+    "8": {"name": "Cosplay", "id": -1003631816627}
 }
 
 MODES = {
