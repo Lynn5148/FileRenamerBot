@@ -27,8 +27,8 @@ def save_queue(queue):
 @app.on_message(filters.command(list(MODES.keys())) & ADMIN_FILTER)
 async def start_creation(client, message):
     mode = message.command[0].lower()
-    user_state[message.from_user.id] = {"mode": mode, "step": "photo"}
-    await message.reply(f"🚀 **{mode.upper()} Mode Activated**\n📸 Send the photo now.")
+    user_state[message.from_user.id] = {"mode": mode, "step": "photo", "photos": []}
+    await message.reply(f"🚀 **{mode.upper()} Mode Activated**\n📸 Send photos (up to 10). Send /done when finished.")
 
 @app.on_message(filters.photo & ADMIN_FILTER)
 async def photo_handler(client, message):
@@ -36,8 +36,25 @@ async def photo_handler(client, message):
     state = user_state.get(user_id)
     if not state or state["step"] != "photo": return
     
-    state["photo"] = message.photo.file_id
-    
+    state["photos"].append(message.photo.file_id)
+    count = len(state["photos"])
+
+    if count >= 10:
+        await message.reply(f"✅ {count} photos collected. Max reached, proceeding...")
+        await proceed_after_photos(message, state)
+    else:
+        await message.reply(f"📸 Photo {count} saved. Send more or /done to proceed.")
+
+@app.on_message(filters.command("done") & ADMIN_FILTER)
+async def done_photos(client, message):
+    user_id = message.from_user.id
+    state = user_state.get(user_id)
+    if not state or state["step"] != "photo": return
+    if not state["photos"]:
+        await message.reply("⚠️ Send at least one photo first."); return
+    await proceed_after_photos(message, state)
+
+async def proceed_after_photos(message, state):
     if state["mode"] == "indian":
         state["step"] = "description"
         await message.reply("📝 Send Description:")
@@ -48,7 +65,7 @@ async def photo_handler(client, message):
         state["step"] = "name"
         await message.reply("🏷️ Send Name:")
 
-@app.on_message(filters.text & ~filters.command(list(MODES.keys()) + ["post", "stop", "view", "status", "sendnow", "clearall"]) & ADMIN_FILTER)
+@app.on_message(filters.text & ~filters.command(list(MODES.keys()) + ["post", "stop", "view", "status", "sendnow", "clearall", "done"]) & ADMIN_FILTER)
 async def text_handler(client, message):
     user_id = message.from_user.id
     state = user_state.get(user_id)
@@ -68,7 +85,7 @@ async def text_handler(client, message):
             state["link"] = message.text; state["step"] = "channel"
             await message.reply("📡 Select channel:", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("Indian", callback_data="sel_5")]]))
 
-    elif m == "Cosplay":
+    elif m == "cosplay":
         if s == "name":
             state["description"] = message.text; state["step"] = "link"
             await message.reply("🔗 Send Link:")
@@ -131,8 +148,8 @@ async def select_channel(client, callback_query):
     
     if m == "indian":
         caption = MODES["indian"]["caption"].format(description=state["description"], duration=state["duration"])
-    elif m == "publicchannel":
-        caption = MODES["Cosplay"]["caption"].format(description=state["description"])
+    elif m == "cosplay":
+        caption = MODES["cosplay"]["caption"].format(description=state["description"])
     elif m == "cornhwa":
         caption = MODES["cornhwa"]["caption"].format(name=state["name"], status=state["status"], chapters=state["chapters"])
     elif m == "doujinshi":
@@ -143,14 +160,14 @@ async def select_channel(client, callback_query):
     queue = load_queue()
     queue.append({
         "chat_id": target["id"],
-        "photo": state["photo"],
+        "photos": state["photos"],
         "caption": caption,
         "link": state["link"],
         "mode": m
     })
     save_queue(queue)
 
-    await callback_query.message.edit_text(f"✅ Added to Queue for **{target['name']}**.\nTotal posts: {len(queue)}")
+    await callback_query.message.edit_text(f"✅ Added to Queue for **{target['name']}**.\nPhotos: {len(state['photos'])} | Total posts: {len(queue)}")
     user_state.pop(user_id, None)
 
 async def posting_logic(client, message):
@@ -168,7 +185,16 @@ async def posting_logic(client, message):
             ])
 
             try:
-                await client.send_photo(chat_id=post["chat_id"], photo=post["photo"], caption=post["caption"], reply_markup=buttons)
+                photos = post.get("photos", [post.get("photo")])
+                if len(photos) == 1:
+                    await client.send_photo(chat_id=post["chat_id"], photo=photos[0], caption=post["caption"], reply_markup=buttons)
+                else:
+                    # Send as media group, caption only on last photo with buttons
+                    from pyrogram.types import InputMediaPhoto
+                    media = [InputMediaPhoto(p) for p in photos[:-1]]
+                    media.append(InputMediaPhoto(photos[-1], caption=post["caption"]))
+                    await client.send_media_group(chat_id=post["chat_id"], media=media)
+                    await client.send_message(chat_id=post["chat_id"], text="👆", reply_markup=buttons)
                 await client.send_sticker(chat_id=post["chat_id"], sticker=STICKER_ID)
             except Exception as e:
                 await message.reply(f"❌ Error: {e}")
@@ -218,9 +244,17 @@ async def send_now(client, message):
     ])
 
     try:
-        await client.send_photo(chat_id=post["chat_id"], photo=post["photo"], caption=post["caption"], reply_markup=buttons)
+        photos = post.get("photos", [post.get("photo")])
+        if len(photos) == 1:
+            await client.send_photo(chat_id=post["chat_id"], photo=photos[0], caption=post["caption"], reply_markup=buttons)
+        else:
+            from pyrogram.types import InputMediaPhoto
+            media = [InputMediaPhoto(p) for p in photos[:-1]]
+            media.append(InputMediaPhoto(photos[-1], caption=post["caption"]))
+            await client.send_media_group(chat_id=post["chat_id"], media=media)
+            await client.send_message(chat_id=post["chat_id"], text="👆", reply_markup=buttons)
         await client.send_sticker(chat_id=post["chat_id"], sticker=STICKER_ID)
-        await message.reply("✅ **Sent Now!** Seedha channel pe bhej diya gaya.")
+        await message.reply("✅ **Sent Now!**")
     except Exception as e:
         await message.reply(f"❌ Error: {e}")
 
