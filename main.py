@@ -2,14 +2,14 @@ import asyncio
 import json
 import os
 from pyrogram import Client, filters
-from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, InputMediaPhoto, InputMediaVideo
 from config import *
 
 app = Client("bot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
 
 ADMIN_FILTER = filters.user(ADMINS)
 user_state = {}
-posting_task = None  
+posting_task = None
 DB_FILE = "queue_db.json"
 
 def load_queue():
@@ -24,41 +24,155 @@ def save_queue(queue):
     with open(DB_FILE, "w") as f:
         json.dump(queue, f, indent=4)
 
+def build_caption(post):
+    m = post["mode"]
+    link = post["link"]
+    media = post.get("media", [])
+    is_multi = len(media) > 1
+
+    if m == "japanese":
+        if is_multi:
+            link_section = f"\n━━━━━━━━━━━━━━\n<a href='{link}'>Download And Watch Link 📌</a>\n<a href='{link}'>Download And Watch Link 📌</a>\n<a href='{link}'>Download And Watch Link 📌</a>\n━━━━━━━━━━━━━━"
+        else:
+            link_section = ""
+        return MODES["japanese"]["caption"].format(
+            code=post["code"],
+            description=post["description"],
+            link_section=link_section
+        )
+
+    elif m == "hanime":
+        if is_multi:
+            link_section = f"\n━━━━━━ ✦ ━━━━━━\n<a href='{link}'>🔗 Download And Watch Link 📌</a>\n<a href='{link}'>🔗 Download And Watch Link 📌</a>\n<a href='{link}'>🔗 Download And Watch Link 📌</a>\n━━━━━━ ✦ ━━━━━━"
+        else:
+            link_section = ""
+        return MODES["hanime"]["caption"].format(
+            description=post["description"],
+            episodes=post["episodes"],
+            link_section=link_section
+        )
+
+    elif m in ["cornhwa", "doujinshi"]:
+        if is_multi:
+            link_section = f"\n<a href='{link}'>Read Now 🍁📌</a>\n<a href='{link}'>Read Now 🍁📌</a>\n<a href='{link}'>Read Now 🍁📌</a>"
+        else:
+            link_section = ""
+        if m == "cornhwa":
+            return MODES["cornhwa"]["caption"].format(
+                name=post["name"], status=post["status"], chapters=post["chapters"]
+            ) + link_section
+        else:
+            return MODES["doujinshi"]["caption"].format(
+                name=post["name"], pages=post["pages"]
+            ) + link_section
+
+    else:
+        if is_multi:
+            link_section = f"\n<a href='{link}'>Click to watch 🍁📌</a>\n<a href='{link}'>Click to watch 🍁📌</a>\n<a href='{link}'>Click to watch 🍁📌</a>"
+        else:
+            link_section = ""
+
+        if m == "indian":
+            return MODES["indian"]["caption"].format(
+                description=post["description"], duration=post["duration"]
+            ) + link_section
+        elif m == "cosplay":
+            return MODES["cosplay"]["caption"].format(
+                description=post["description"]
+            ) + link_section
+        elif m == "adult":
+            return MODES["adult"]["caption"].format(
+                name=post["name"], company=post.get("company", "Premium")
+            ) + link_section
+        else:
+            return MODES[m]["caption"].format(
+                name=post["name"], company=post.get("company", "Premium")
+            ) + link_section
+
+def build_buttons(post):
+    m = post["mode"]
+    link = post["link"]
+    btn_text = "📖 𝗥𝗘𝗔𝗗 𝗡𝗢𝗪" if m in ["cornhwa", "doujinshi"] else "🔗 𝗖𝗟𝗜𝗖𝗞 𝗧𝗢 𝗪𝗔𝗧𝗖𝗛"
+    return InlineKeyboardMarkup([
+        [InlineKeyboardButton(btn_text, url=link)],
+        [InlineKeyboardButton("📢 𝗠𝗔𝗜𝗡 𝗖𝗛𝗔𝗡𝗡𝗘𝗟", url="https://t.me/HeavenFallNetwork")]
+    ])
+
+async def send_post(client, post, message=None):
+    media_list = post.get("media", [])
+    caption = build_caption(post)
+    buttons = build_buttons(post)
+    chat_id = post["chat_id"]
+    is_multi = len(media_list) > 1
+
+    try:
+        if not is_multi:
+            item = media_list[0]
+            if item["type"] == "video":
+                await client.send_video(chat_id=chat_id, video=item["file_id"], caption=caption, reply_markup=buttons, parse_mode="html")
+            else:
+                await client.send_photo(chat_id=chat_id, photo=item["file_id"], caption=caption, reply_markup=buttons, parse_mode="html")
+        else:
+            media_group = []
+            for i, item in enumerate(media_list):
+                cap = caption if i == len(media_list) - 1 else ""
+                if item["type"] == "video":
+                    media_group.append(InputMediaVideo(item["file_id"], caption=cap, parse_mode="html"))
+                else:
+                    media_group.append(InputMediaPhoto(item["file_id"], caption=cap, parse_mode="html"))
+            await client.send_media_group(chat_id=chat_id, media=media_group)
+
+        await client.send_sticker(chat_id=chat_id, sticker=STICKER_ID)
+
+    except Exception as e:
+        if message:
+            await message.reply(f"❌ Error: {e}")
+
 @app.on_message(filters.command(list(MODES.keys())) & ADMIN_FILTER)
 async def start_creation(client, message):
     mode = message.command[0].lower()
-    user_state[message.from_user.id] = {"mode": mode, "step": "photo", "photos": []}
-    await message.reply(f"🚀 **{mode.upper()} Mode Activated**\n📸 Send photos (up to 10). Send /done when finished.")
+    user_state[message.from_user.id] = {"mode": mode, "step": "media", "media": []}
+    await message.reply(f"🚀 **{mode.upper()} Mode Activated**\n📸 Send photos/videos (up to 10). Send /done when finished.")
 
-@app.on_message(filters.photo & ADMIN_FILTER)
-async def photo_handler(client, message):
+@app.on_message((filters.photo | filters.video) & ADMIN_FILTER)
+async def media_handler(client, message):
     user_id = message.from_user.id
     state = user_state.get(user_id)
-    if not state or state["step"] != "photo": return
-    
-    state["photos"].append(message.photo.file_id)
-    count = len(state["photos"])
+    if not state or state["step"] != "media": return
 
+    if message.photo:
+        state["media"].append({"type": "photo", "file_id": message.photo.file_id})
+    elif message.video:
+        state["media"].append({"type": "video", "file_id": message.video.file_id})
+
+    count = len(state["media"])
     if count >= 10:
-        await message.reply(f"✅ {count} photos collected. Max reached, proceeding...")
-        await proceed_after_photos(message, state)
+        await message.reply(f"✅ {count} files collected. Max reached, proceeding...")
+        await proceed_after_media(message, state)
     else:
-        await message.reply(f"📸 Photo {count} saved. Send more or /done to proceed.")
+        await message.reply(f"📸 File {count} saved. Send more or /done to proceed.")
 
 @app.on_message(filters.command("done") & ADMIN_FILTER)
-async def done_photos(client, message):
+async def done_media(client, message):
     user_id = message.from_user.id
     state = user_state.get(user_id)
-    if not state or state["step"] != "photo": return
-    if not state["photos"]:
-        await message.reply("⚠️ Send at least one photo first."); return
-    await proceed_after_photos(message, state)
+    if not state or state["step"] != "media": return
+    if not state["media"]:
+        await message.reply("⚠️ Send at least one photo or video first."); return
+    await proceed_after_media(message, state)
 
-async def proceed_after_photos(message, state):
-    if state["mode"] == "indian":
+async def proceed_after_media(message, state):
+    m = state["mode"]
+    if m == "indian":
         state["step"] = "description"
         await message.reply("📝 Send Description:")
-    elif state["mode"] == "cosplay":
+    elif m == "japanese":
+        state["step"] = "code"
+        await message.reply("🔢 Send Episode Code:")
+    elif m == "hanime":
+        state["step"] = "description"
+        await message.reply("📝 Send Description:")
+    elif m == "cosplay":
         state["step"] = "name"
         await message.reply("🏷️ Send Name/Description:")
     else:
@@ -74,7 +188,29 @@ async def text_handler(client, message):
     m = state["mode"]
     s = state["step"]
 
-    if m == "indian":
+    if m == "japanese":
+        if s == "code":
+            state["code"] = message.text; state["step"] = "description"
+            await message.reply("📝 Send Description:")
+        elif s == "description":
+            state["description"] = message.text; state["step"] = "link"
+            await message.reply("🔗 Send Link:")
+        elif s == "link":
+            state["link"] = message.text; state["step"] = "channel"
+            await message.reply("📡 Select channel:", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("Japanese", callback_data="sel_9")]]))
+
+    elif m == "hanime":
+        if s == "description":
+            state["description"] = message.text; state["step"] = "episodes"
+            await message.reply("🔢 No. of Episodes:")
+        elif s == "episodes":
+            state["episodes"] = message.text; state["step"] = "link"
+            await message.reply("🔗 Send Link:")
+        elif s == "link":
+            state["link"] = message.text; state["step"] = "channel"
+            await message.reply("📡 Select channel:", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("Hanime", callback_data="sel_10")]]))
+
+    elif m == "indian":
         if s == "description":
             state["description"] = message.text; state["step"] = "duration"
             await message.reply("⏱️ Send Video Duration (in mins):")
@@ -91,7 +227,7 @@ async def text_handler(client, message):
             await message.reply("🔗 Send Link:")
         elif s == "link":
             state["link"] = message.text; state["step"] = "channel"
-            await message.reply("📡 Select channel:", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("Cosplay Channel", callback_data="sel_8")]]))
+            await message.reply("📡 Select channel:", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("Cosplay", callback_data="sel_8")]]))
 
     elif m == "cornhwa":
         if s == "name":
@@ -145,29 +281,41 @@ async def select_channel(client, callback_query):
     channel_key = callback_query.data.split("_")[1]
     target = CHANNELS[channel_key]
     m = state["mode"]
-    
-    if m == "indian":
-        caption = MODES["indian"]["caption"].format(description=state["description"], duration=state["duration"])
-    elif m == "cosplay":
-        caption = MODES["cosplay"]["caption"].format(description=state["description"])
-    elif m == "cornhwa":
-        caption = MODES["cornhwa"]["caption"].format(name=state["name"], status=state["status"], chapters=state["chapters"])
-    elif m == "doujinshi":
-        caption = MODES["doujinshi"]["caption"].format(name=state["name"], pages=state["pages"])
-    else:
-        caption = MODES[m]["caption"].format(name=state["name"], company=state.get("company", "Premium"))
 
     queue = load_queue()
-    queue.append({
+    entry = {
         "chat_id": target["id"],
-        "photos": state["photos"],
-        "caption": caption,
+        "media": state["media"],
         "link": state["link"],
         "mode": m
-    })
+    }
+
+    if m == "japanese":
+        entry["code"] = state["code"]
+        entry["description"] = state["description"]
+    elif m == "hanime":
+        entry["description"] = state["description"]
+        entry["episodes"] = state["episodes"]
+    elif m == "indian":
+        entry["description"] = state["description"]
+        entry["duration"] = state["duration"]
+    elif m == "cosplay":
+        entry["description"] = state["description"]
+    elif m == "cornhwa":
+        entry["name"] = state["name"]
+        entry["status"] = state["status"]
+        entry["chapters"] = state["chapters"]
+    elif m == "doujinshi":
+        entry["name"] = state["name"]
+        entry["pages"] = state["pages"]
+    else:
+        entry["name"] = state["name"]
+        entry["company"] = state.get("company", "Premium")
+
+    queue.append(entry)
     save_queue(queue)
 
-    await callback_query.message.edit_text(f"✅ Added to Queue for **{target['name']}**.\nPhotos: {len(state['photos'])} | Total posts: {len(queue)}")
+    await callback_query.message.edit_text(f"✅ Added to Queue for **{target['name']}**.\nFiles: {len(state['media'])} | Total posts: {len(queue)}")
     user_state.pop(user_id, None)
 
 async def posting_logic(client, message):
@@ -177,28 +325,7 @@ async def posting_logic(client, message):
             if not queue: break
             post = queue.pop(0)
             save_queue(queue)
-            
-            btn_text = "📖 𝗥𝗘𝗔𝗗 𝗡𝗢𝗪" if post.get("mode") in ["cornhwa", "doujinshi"] else "🔗 𝗖𝗟𝗜𝗖𝗞 𝗧𝗢 𝗪𝗔𝗧𝗖𝗛"
-            buttons = InlineKeyboardMarkup([
-                [InlineKeyboardButton(btn_text, url=post["link"])], 
-                [InlineKeyboardButton("📢 𝗠𝗔𝗜𝗡 𝗖𝗛𝗔𝗡𝗡𝗘𝗟", url="https://t.me/HeavenFallNetwork")]
-            ])
-
-            try:
-                photos = post.get("photos", [post.get("photo")])
-                if len(photos) == 1:
-                    await client.send_photo(chat_id=post["chat_id"], photo=photos[0], caption=post["caption"], reply_markup=buttons)
-                else:
-                    # Send as media group, caption only on last photo with buttons
-                    from pyrogram.types import InputMediaPhoto
-                    media = [InputMediaPhoto(p) for p in photos[:-1]]
-                    media.append(InputMediaPhoto(photos[-1], caption=post["caption"]))
-                    await client.send_media_group(chat_id=post["chat_id"], media=media)
-                    await client.send_message(chat_id=post["chat_id"], text="👆", reply_markup=buttons)
-                await client.send_sticker(chat_id=post["chat_id"], sticker=STICKER_ID)
-            except Exception as e:
-                await message.reply(f"❌ Error: {e}")
-
+            await send_post(client, post, message)
             if load_queue():
                 await asyncio.sleep(1 * 3600)
             else:
@@ -233,45 +360,28 @@ async def send_now(client, message):
     if not queue:
         await message.reply("📭 Queue is empty.")
         return
-    
     post = queue.pop(0)
     save_queue(queue)
-    
-    btn_text = "📖 𝗥𝗘𝗔𝗗 𝗡𝗢𝗪" if post.get("mode") in ["cornhwa", "doujinshi"] else "🔗 𝗖𝗟𝗜𝗖𝗞 𝗧𝗢 𝗪𝗔𝗧𝗖𝗛"
-    buttons = InlineKeyboardMarkup([
-        [InlineKeyboardButton(btn_text, url=post["link"])], 
-        [InlineKeyboardButton("📢 𝗠𝗔𝗜𝗡 𝗖𝗛𝗔𝗡𝗡𝗘𝗟", url="https://t.me/HeavenFallNetwork")]
-    ])
-
-    try:
-        photos = post.get("photos", [post.get("photo")])
-        if len(photos) == 1:
-            await client.send_photo(chat_id=post["chat_id"], photo=photos[0], caption=post["caption"], reply_markup=buttons)
-        else:
-            from pyrogram.types import InputMediaPhoto
-            media = [InputMediaPhoto(p) for p in photos[:-1]]
-            media.append(InputMediaPhoto(photos[-1], caption=post["caption"]))
-            await client.send_media_group(chat_id=post["chat_id"], media=media)
-            await client.send_message(chat_id=post["chat_id"], text="👆", reply_markup=buttons)
-        await client.send_sticker(chat_id=post["chat_id"], sticker=STICKER_ID)
-        await message.reply("✅ **Sent Now!**")
-    except Exception as e:
-        await message.reply(f"❌ Error: {e}")
+    await send_post(client, post, message)
+    await message.reply("✅ **Sent Now!**")
 
 @app.on_message(filters.command("view") & ADMIN_FILTER)
 async def view_queue(client, message):
     queue = load_queue()
     if not queue: await message.reply("📭 Empty."); return
-    text = "📂 **Queue:**\n\n"; btns = [[InlineKeyboardButton(f"❌ Del {i+1}", callback_data=f"del_{i}")] for i in range(len(queue))]
-    for i, item in enumerate(queue): text += f"{i+1}. {item['caption'][:25]}...\n"
+    text = "📂 **Queue:**\n\n"
+    btns = [[InlineKeyboardButton(f"❌ Del {i+1}", callback_data=f"del_{i}")] for i in range(len(queue))]
+    for i, item in enumerate(queue): text += f"{i+1}. {item['mode'].upper()} | Files: {len(item.get('media', []))}\n"
     await message.reply(text, reply_markup=InlineKeyboardMarkup(btns))
 
 @app.on_callback_query(filters.regex(r"^del_"))
 async def delete_item(client, callback_query):
-    idx = int(callback_query.data.split("_")[1]); queue = load_queue()
+    idx = int(callback_query.data.split("_")[1])
+    queue = load_queue()
     if idx < len(queue):
         queue.pop(idx); save_queue(queue)
-        await callback_query.answer("🗑️ Deleted!"); await view_queue(client, callback_query.message)
+        await callback_query.answer("🗑️ Deleted!")
+        await view_queue(client, callback_query.message)
 
 @app.on_message(filters.command("status") & ADMIN_FILTER)
 async def status_cmd(client, message):
