@@ -16,7 +16,9 @@ CHANNELS = {
     "5": {"name": "Indian", "id": -1003840146959},
     "6": {"name": "Cornhwa", "id": -1003376886471},
     "7": {"name": "Doujinshi", "id": -1003853835138},
-    "8": {"name": "cosplay", "id": -1003631816627}
+    "8": {"name": "Cosplay", "id": -1003631816627},
+    "9": {"name": "Japanese", "id": -1003546961611},
+    "10": {"name": "Hanime", "id": -1003877610680}
 }
 
 MODES = {
@@ -37,5 +39,11 @@ MODES = {
     },
     "cosplay": {
         "caption": "🌸 {description}\n\n💠 Exclusive COSPLAY Content\nCarefully curated premium drop\n\n━━━━━━━━━━━━━━\nTap the button below to access\n━━━━━━━━━━━━━━\n\n#corn #cosplay\n@HeavenFallNetwork"
+    },
+    "japanese": {
+        "caption": "━━━━━━━━━━━━━━\n➪ Episode:- {code}\n➪ Subtitle:- English ✅\n➪ Rating:- 100/10 [#recommended]\n{link_section}\n{description}\n\n@HeavenFallNetwork\n\nSubtitles Are Attached, Use Them"
+    },
+    "hanime": {
+        "caption": "{description}\n\n➪ No. Of Episodes: {episodes} [ 20+min ]\n➪ Rating: 100/10 [Must Watch]\n{link_section}\n\n𝟭𝟴+ 𝗡𝗲𝘁𝘄𝗼𝗿𝗸: @HeavenFallNetwork"
     }
 }
