@@ -30,10 +30,12 @@ MODES = {
         "caption": "🎬 {company}\n\n👤 Featuring: {name}\n\n━━━━━━━━━━━━━━\n💠 Premium Release\nAccess via button below\n━━━━━━━━━━━━━━\n\n#Adult\n@HeavenFallNetwork 🔞"
     },
     "indian": {
-        "caption": "{description} 😋 🔥\n\n➪ Videos: {duration} min Duration\n➪ Rating: 100/10\n\n💦💦 Must watch👁👅👁\nHighly Recommended Stuffs 🐶🥵\n\n@HeavenFallNetwork 🔞"
+        "single": "{description} 😋 🔥\n\n➪ Videos: {duration} min Duration\n➪ Rating: 100/10\n\n💦💦 Must watch👁👅👁\nHighly Recommended Stuffs 🐶🥵\n\n@HeavenFallNetwork 🔞",
+        "multi": "{description} 😋 🔥\n\n➪ Videos: {duration} min Duration\n➪ Rating: 100/10\n\n✦ ━━━━━━━━━ ✦\n<a href='{link}'>🔗 Download Media 📌</a>\n<a href='{link}'>🔗 Download Media 📌</a>\n<a href='{link}'>🔗 Download Media 📌</a>\n✦ ━━━━━━━━━ ✦\n\n💦💦 Must watch👁👅👁\nHighly Recommended Stuffs 🐶🥵\n\n@HeavenFallNetwork 🔞"
     },
     "cornhwa": {
-        "caption": "『 HeavenFall Cornhwa 』\n\n┌───────────────────┐\n  📖 {name}\n└───────────────────┘\n\n‣ Type : Cornhwa\n‣ Status : {status}\n‣ Chapters : {chapters}\n‣ Rating : ⭐ 99/100\n‣ Genres : Drama • Hentai • Romance\n\nProvided by @HeavenFallNetwork\n#MustRead #Recommended"
+        "single": "『 HeavenFall Cornhwa 』\n\n┌─────────────────────┐\n  📖 {name}\n└─────────────────────┘\n\n‣ Type : Cornhwa\n‣ Status : {status}\n‣ Chapters : {chapters}\n‣ Rating : ⭐ 99/100\n‣ Genres : Drama • Hentai • Romance\n\nProvided by @HeavenFallNetwork\n#MustRead #Recommended",
+        "multi": "{name} | HeavenFall Cornhwa |\n\n┏━━━━━━━━━━━━━━━┓\n\n‣ Type : CORNHWA\n‣ Average Rating : 99\n‣ Status : {status}\n‣ No of chapters : {chapters}\n‣ Genres : Drama, Hentai, Romance\n\n┗━━━━━━━━━━━━━━━┛\n❖ 𝗝𝗢𝗜𝗡 𝗧𝗛𝗘 𝗖𝗛𝗔𝗡𝗡𝗘𝗟 𝗕𝗘𝗟𝗢𝗪 ❖\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n\n>> <a href='{link}'>LINK 🖇️ 📌</a>\n>> <a href='{link}'>LINK 🖇️ 📌</a>\n>> <a href='{link}'>LINK 🖇️ 📌</a>\n\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n\nProvided by @HeavenFallNetwork\n\n#MustRead #recommended"
     },
     "doujinshi": {
         "caption": "{name} | HeavenFallNetwork |\n\n» Nᴏ.ᴏғ Pᴀɢᴇs: {pages}\n» Tʏᴘᴇ: #doujinshi\n» Lᴀɴɢᴜᴀɢᴇ: #english\n» Tᴀɢs: #heavenfallnetwork #mature #adult #doujinshi\n\n════════════════════\nProvided by @HeavenFallNetwork\n════════════════════"
@@ -42,12 +44,14 @@ MODES = {
         "caption": "🌸 {description}\n\n💠 Exclusive COSPLAY Content\nCarefully curated premium drop\n\n━━━━━━━━━━━━━━\nTap the button below to access\n━━━━━━━━━━━━━━\n\n#corn #cosplay\n@HeavenFallNetwork"
     },
     "japanese": {
-        "caption": "━━━━━━━━━━━━━━━━━━\n➪ Episode:- {code}\n➪ Subtitle:- English ✅\n➪ Rating:- 100/10 [#recommended]\n{link_section}\n{description}\n\n@HeavenFallNetwork\n\nSubtitles Are Attached, Use Them"
+        "single": "━━━━━━━━━━━━━━━━━━\n➪ Episode:- {code}\n➪ Subtitle:- English ✅\n➪ Rating:- 100/10 [#recommended]\n━━━━━━━━━━━━━━━━━━\n\n{description}\n\n@HeavenFallNetwork\n\nSubtitles Are Attached, Use Them",
+        "multi": "━━━━━━━━━━━━━━━━━━\n➪ Episode:- {code}\n➪ Subtitle:- English ✅\n➪ Rating:- 100/10 [#recommended]\n━━━━━━━━━━━━━━━━━━\n<a href='{link}'>Download And Watch Link 📌</a>\n<a href='{link}'>Download And Watch Link 📌</a>\n<a href='{link}'>Download And Watch Link 📌</a>\n━━━━━━━━━━━━━━━━━━\n{description}\n\n@HeavenFallNetwork\n\nSubtitles Are Attached, Use Them"
     },
     "hanime": {
-        "caption": "{description}\n\n➪ No. Of Episodes: {episodes} [ 20+min ]\n➪ Rating: 100/10 [Must Watch]\n{link_section}\n\n𝟭𝟴+ 𝗡𝗲𝘁𝘄𝗼𝗿𝗸: @HeavenFallNetwork"
+        "single": "{description}\n\n➪ No. Of Episodes: {episodes} [ 20+min ]\n➪ Rating: 100/10 [Must Watch]\n\n𝟭𝟴+ 𝗡𝗲𝘁𝘄𝗼𝗿𝗸: @HeavenFallNetwork",
+        "multi": "{description}\n\n➪ No. Of Episodes: {episodes} [ 20+min ]\n➪ Rating: 100/10 [Must Watch]\n\n━━━━━━ ✦ ━━━━━━\n<a href='{link}'>🔗 Download And Watch Link 📌</a>\n<a href='{link}'>🔗 Download And Watch Link 📌</a>\n<a href='{link}'>🔗 Download And Watch Link 📌</a>\n━━━━━━ ✦ ━━━━━━\n\n𝟭𝟴+ 𝗡𝗲𝘁𝘄𝗼𝗿𝗸: @HeavenFallNetwork"
     },
     "gb": {
-        "caption": "💡Title: {description}\n🎬 Studio: {studio}\n👩🏻 Actress: {names}\n\n#Adult #Hardcore #DAP #Rough\n{link_section}\n\n✅ @HeavenFallNetwork"
+        "caption": "💡Title: {description}\n🎬 Studio: {studio}\n👩🏻 Actress: {names}\n\n#Adult #Hardcore #DAP #Rough\n\n✅ @HeavenFallNetwork"
     }
 }
