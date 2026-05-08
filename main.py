@@ -12,6 +12,8 @@ user_state = {}
 posting_task = None
 DB_FILE = "queue_db.json"
 
+MULTI_SUPPORT = ["indian", "cornhwa", "japanese", "hanime"]
+
 def load_queue():
     if os.path.exists(DB_FILE):
         try:
@@ -30,107 +32,84 @@ def build_caption(post):
     media = post.get("media", [])
     is_multi = len(media) > 1
 
-    multi_links_standard = f"\n━━━━━━ ✦ ━━━━━━\n<a href='{link}'>🔗 Click to watch 📌</a>\n<a href='{link}'>🔗 Click to watch 📌</a>\n<a href='{link}'>🔗 Click to watch 📌</a>\n━━━━━━ ✦ ━━━━━━"
-    multi_links_read = f"\n━━━━━━ ✦ ━━━━━━\n<a href='{link}'>🔗 Click to Read Now 📌</a>\n<a href='{link}'>🔗 Click to Read Now 📌</a>\n<a href='{link}'>🔗 Click to Read Now 📌</a>\n━━━━━━ ✦ ━━━━━━"
-    multi_links_download = f"\n━━━━━━━━━━━━━━━━━━\n<a href='{link}'>🔗 Download And Watch Link 📌</a>\n<a href='{link}'>🔗 Download And Watch Link 📌</a>\n<a href='{link}'>🔗 Download And Watch Link 📌</a>\n━━━━━━━━━━━━━━━━━━"
-    multi_links_hanime = f"\n━━━━━━ ✦ ━━━━━━\n<a href='{link}'>🔗 Download And Watch Link 📌</a>\n<a href='{link}'>🔗 Download And Watch Link 📌</a>\n<a href='{link}'>🔗 Download And Watch Link 📌</a>\n━━━━━━ ✦ ━━━━━━"
-    multi_links_gb = f"\n✦ ━━━━━━━━━━━━━ ✦\n<a href='{link}'>🔗 Download Media 📌</a>\n<a href='{link}'>🔗 Download Media 📌</a>\n<a href='{link}'>🔗 Download Media 📌</a>\n✦ ━━━━━━━━━━━━━ ✦"
-
-    if m == "japanese":
-        link_section = multi_links_download if is_multi else ""
-        return MODES["japanese"]["caption"].format(
-            code=post["code"],
+    if m == "indian":
+        if is_multi:
+            return MODES["indian"]["multi"].format(
+                description=post["description"],
+                duration=post["duration"],
+                link=link
+            )
+        return MODES["indian"]["single"].format(
             description=post["description"],
-            link_section=link_section
-        )
-
-    elif m == "hanime":
-        link_section = multi_links_hanime if is_multi else ""
-        return MODES["hanime"]["caption"].format(
-            description=post["description"],
-            episodes=post["episodes"],
-            link_section=link_section
-        )
-
-    elif m == "gb":
-        link_section = multi_links_gb if is_multi else ""
-        return MODES["gb"]["caption"].format(
-            description=post["description"],
-            studio=post["studio"],
-            names=post["names"],
-            link_section=link_section
+            duration=post["duration"]
         )
 
     elif m == "cornhwa":
-        base = MODES["cornhwa"]["caption"].format(
-            name=post["name"], status=post["status"], chapters=post["chapters"]
-        )
         if is_multi:
-            # Insert link section before "Provided by"
-            base = base.replace(
-                "Provided by @HeavenFallNetwork",
-                f"{multi_links_read}\n\nProvided by @HeavenFallNetwork"
+            return MODES["cornhwa"]["multi"].format(
+                name=post["name"],
+                status=post["status"],
+                chapters=post["chapters"],
+                link=link
             )
-        return base
+        return MODES["cornhwa"]["single"].format(
+            name=post["name"],
+            status=post["status"],
+            chapters=post["chapters"]
+        )
+
+    elif m == "japanese":
+        if is_multi:
+            return MODES["japanese"]["multi"].format(
+                code=post["code"],
+                description=post["description"],
+                link=link
+            )
+        return MODES["japanese"]["single"].format(
+            code=post["code"],
+            description=post["description"]
+        )
+
+    elif m == "hanime":
+        if is_multi:
+            return MODES["hanime"]["multi"].format(
+                description=post["description"],
+                episodes=post["episodes"],
+                link=link
+            )
+        return MODES["hanime"]["single"].format(
+            description=post["description"],
+            episodes=post["episodes"]
+        )
 
     elif m == "doujinshi":
-        base = MODES["doujinshi"]["caption"].format(
+        return MODES["doujinshi"]["caption"].format(
             name=post["name"], pages=post["pages"]
         )
-        if is_multi:
-            base = base.replace(
-                "════════════════════\nProvided by @HeavenFallNetwork\n════════════════════",
-                f"════════════════════\nProvided by @HeavenFallNetwork\n════════════════════{multi_links_read}"
-            )
-        return base
-
-    elif m == "indian":
-        base = MODES["indian"]["caption"].format(
-            description=post["description"], duration=post["duration"]
-        )
-        if is_multi:
-            base = base.replace(
-                "@HeavenFallNetwork 🔞",
-                f"{multi_links_standard}\n\n@HeavenFallNetwork 🔞"
-            )
-        return base
 
     elif m == "cosplay":
-        base = MODES["cosplay"]["caption"].format(description=post["description"])
-        if is_multi:
-            base = base.replace(
-                "@HeavenFallNetwork",
-                f"{multi_links_standard}\n\n@HeavenFallNetwork"
-            )
-        return base
+        return MODES["cosplay"]["caption"].format(description=post["description"])
 
     elif m == "adult":
-        base = MODES["adult"]["caption"].format(
+        return MODES["adult"]["caption"].format(
             name=post["name"], company=post.get("company", "Premium")
         )
-        if is_multi:
-            base = base.replace(
-                "@HeavenFallNetwork 🔞",
-                f"{multi_links_standard}\n\n@HeavenFallNetwork 🔞"
-            )
-        return base
 
     elif m == "onlyfans":
-        base = MODES["onlyfans"]["caption"].format(name=post["name"])
-        if is_multi:
-            base = base.replace(
-                "@HeavenFallNetwork 🔞",
-                f"{multi_links_standard}\n\n@HeavenFallNetwork 🔞"
-            )
-        return base
+        return MODES["onlyfans"]["caption"].format(name=post["name"])
+
+    elif m == "gb":
+        return MODES["gb"]["caption"].format(
+            description=post["description"],
+            studio=post["studio"],
+            names=post["names"]
+        )
 
     else:
-        base = MODES[m]["caption"].format(
-            name=post["name"], company=post.get("company", "Premium")
+        return MODES[m]["caption"].format(
+            name=post.get("name", ""),
+            company=post.get("company", "Premium")
         )
-        if is_multi:
-            base += multi_links_standard
-        return base
 
 def build_buttons(post):
     m = post["mode"]
@@ -146,7 +125,8 @@ async def send_post(client, post, message=None):
     caption = build_caption(post)
     buttons = build_buttons(post)
     chat_id = post["chat_id"]
-    is_multi = len(media_list) > 1
+    m = post["mode"]
+    is_multi = len(media_list) > 1 and m in MULTI_SUPPORT
 
     try:
         if not is_multi:
@@ -189,7 +169,10 @@ async def send_post(client, post, message=None):
 async def start_creation(client, message):
     mode = message.command[0].lower()
     user_state[message.from_user.id] = {"mode": mode, "step": "media", "media": []}
-    await message.reply(f"🚀 **{mode.upper()} Mode Activated**\n📸 Send photos/videos (up to 10). Send /done when finished.")
+    if mode in MULTI_SUPPORT:
+        await message.reply(f"🚀 **{mode.upper()} Mode Activated**\n📸 Send photos/videos (up to 10). Send /done when finished.")
+    else:
+        await message.reply(f"🚀 **{mode.upper()} Mode Activated**\n📸 Send the photo or video.")
 
 @app.on_message((filters.photo | filters.video) & ADMIN_FILTER)
 async def media_handler(client, message):
@@ -202,8 +185,12 @@ async def media_handler(client, message):
     elif message.video:
         state["media"].append({"type": "video", "file_id": message.video.file_id})
 
+    m = state["mode"]
     count = len(state["media"])
-    if count >= 10:
+
+    if m not in MULTI_SUPPORT:
+        await proceed_after_media(message, state)
+    elif count >= 10:
         await message.reply(f"✅ {count} files collected. Max reached, proceeding...")
         await proceed_after_media(message, state)
     else:
