@@ -33,16 +33,16 @@ MODES = {
         "caption": "{description} 😋 🔥\n\n➪ Videos: {duration} min Duration\n➪ Rating: 100/10\n\n💦💦 Must watch👁👅👁\nHighly Recommended Stuffs 🐶🥵\n\n@HeavenFallNetwork 🔞"
     },
     "cornhwa": {
-        "caption": "**{name} | HeavenFall Cornhwa |**\n\n┏━━━━━━━━━━━━━━━┓\n\n‣ Type : CORNHWA\n‣ Average Rating : 99\n‣ Status : {status}\n‣ No of chapters : {chapters}\n‣ Genres : Drama, Hentai, Romance\n\n┗━━━━━━━━━━━━━━━┛\n**❖ CLICK ON READ NOW BUTTON ❖**\n▬▬▬▬▬▬▬▬▬▬▬▬▬\n﻿\nProvided by @HeavenFallNetwork\n\n[#MustRead #recommended]"
+        "caption": "『 HeavenFall Cornhwa 』\n\n┌─────────────────────┐\n  📖 {name}\n└─────────────────────┘\n\n‣ Type : Cornhwa\n‣ Status : {status}\n‣ Chapters : {chapters}\n‣ Rating : ⭐ 99/100\n‣ Genres : Drama • Hentai • Romance\n\nProvided by @HeavenFallNetwork\n#MustRead #Recommended"
     },
     "doujinshi": {
-        "caption": "**{name} | HeavenFallNetwork |**\n\n» Nᴏ.ᴏғ Pᴀɢᴇs: {pages}\n» Tʏᴘᴇ: #doujinshi\n» Lᴀɴɢᴜᴀɢᴇ: #english \n» Tᴀɢs: #heavenfallnetwork #mature #adult #doujinshi \n\n════════════════════\nProvided by @HeavenFallNetwork\n════════════════════"
+        "caption": "{name} | HeavenFallNetwork |\n\n» Nᴏ.ᴏғ Pᴀɢᴇs: {pages}\n» Tʏᴘᴇ: #doujinshi\n» Lᴀɴɢᴜᴀɢᴇ: #english\n» Tᴀɢs: #heavenfallnetwork #mature #adult #doujinshi\n\n════════════════════\nProvided by @HeavenFallNetwork\n════════════════════"
     },
     "cosplay": {
         "caption": "🌸 {description}\n\n💠 Exclusive COSPLAY Content\nCarefully curated premium drop\n\n━━━━━━━━━━━━━━\nTap the button below to access\n━━━━━━━━━━━━━━\n\n#corn #cosplay\n@HeavenFallNetwork"
     },
     "japanese": {
-        "caption": "━━━━━━━━━━━━━━\n➪ Episode:- {code}\n➪ Subtitle:- English ✅\n➪ Rating:- 100/10 [#recommended]\n{link_section}\n{description}\n\n@HeavenFallNetwork\n\nSubtitles Are Attached, Use Them"
+        "caption": "━━━━━━━━━━━━━━━━━━\n➪ Episode:- {code}\n➪ Subtitle:- English ✅\n➪ Rating:- 100/10 [#recommended]\n{link_section}\n{description}\n\n@HeavenFallNetwork\n\nSubtitles Are Attached, Use Them"
     },
     "hanime": {
         "caption": "{description}\n\n➪ No. Of Episodes: {episodes} [ 20+min ]\n➪ Rating: 100/10 [Must Watch]\n{link_section}\n\n𝟭𝟴+ 𝗡𝗲𝘁𝘄𝗼𝗿𝗸: @HeavenFallNetwork"
