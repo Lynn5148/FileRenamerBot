@@ -1,7 +1,7 @@
 import asyncio
 import json
 import os
-from pyrogram import Client, filters
+from pyrogram import Client, filters, enums
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, InputMediaPhoto, InputMediaVideo
 from config import *
 
@@ -52,6 +52,18 @@ def build_caption(post):
             link_section=link_section
         )
 
+    elif m == "gb":
+        if is_multi:
+            link_section = f"\n✦ ━━━━━━━━━━━━━ ✦\n<a href='{link}'>🔗 Download Media 📌</a>\n<a href='{link}'>🔗 Download Media 📌</a>\n<a href='{link}'>🔗 Download Media 📌</a>\n✦ ━━━━━━━━━━━━━ ✦"
+        else:
+            link_section = ""
+        return MODES["gb"]["caption"].format(
+            description=post["description"],
+            studio=post["studio"],
+            names=post["names"],
+            link_section=link_section
+        )
+
     elif m in ["cornhwa", "doujinshi"]:
         if is_multi:
             link_section = f"\n<a href='{link}'>Read Now 🍁📌</a>\n<a href='{link}'>Read Now 🍁📌</a>\n<a href='{link}'>Read Now 🍁📌</a>"
@@ -71,7 +83,6 @@ def build_caption(post):
             link_section = f"\n<a href='{link}'>Click to watch 🍁📌</a>\n<a href='{link}'>Click to watch 🍁📌</a>\n<a href='{link}'>Click to watch 🍁📌</a>"
         else:
             link_section = ""
-
         if m == "indian":
             return MODES["indian"]["caption"].format(
                 description=post["description"], duration=post["duration"]
@@ -109,17 +120,31 @@ async def send_post(client, post, message=None):
         if not is_multi:
             item = media_list[0]
             if item["type"] == "video":
-                await client.send_video(chat_id=chat_id, video=item["file_id"], caption=caption, reply_markup=buttons, parse_mode="html")
+                await client.send_video(
+                    chat_id=chat_id, video=item["file_id"],
+                    caption=caption, reply_markup=buttons,
+                    parse_mode=enums.ParseMode.HTML
+                )
             else:
-                await client.send_photo(chat_id=chat_id, photo=item["file_id"], caption=caption, reply_markup=buttons, parse_mode="html")
+                await client.send_photo(
+                    chat_id=chat_id, photo=item["file_id"],
+                    caption=caption, reply_markup=buttons,
+                    parse_mode=enums.ParseMode.HTML
+                )
         else:
             media_group = []
             for i, item in enumerate(media_list):
                 cap = caption if i == len(media_list) - 1 else ""
                 if item["type"] == "video":
-                    media_group.append(InputMediaVideo(item["file_id"], caption=cap, parse_mode="html"))
+                    media_group.append(InputMediaVideo(
+                        item["file_id"], caption=cap,
+                        parse_mode=enums.ParseMode.HTML
+                    ))
                 else:
-                    media_group.append(InputMediaPhoto(item["file_id"], caption=cap, parse_mode="html"))
+                    media_group.append(InputMediaPhoto(
+                        item["file_id"], caption=cap,
+                        parse_mode=enums.ParseMode.HTML
+                    ))
             await client.send_media_group(chat_id=chat_id, media=media_group)
 
         await client.send_sticker(chat_id=chat_id, sticker=STICKER_ID)
@@ -175,6 +200,9 @@ async def proceed_after_media(message, state):
     elif m == "cosplay":
         state["step"] = "name"
         await message.reply("🏷️ Send Name/Description:")
+    elif m == "gb":
+        state["step"] = "description"
+        await message.reply("💡 Send Title/Description:")
     else:
         state["step"] = "name"
         await message.reply("🏷️ Send Name:")
@@ -209,6 +237,20 @@ async def text_handler(client, message):
         elif s == "link":
             state["link"] = message.text; state["step"] = "channel"
             await message.reply("📡 Select channel:", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("Hanime", callback_data="sel_10")]]))
+
+    elif m == "gb":
+        if s == "description":
+            state["description"] = message.text; state["step"] = "studio"
+            await message.reply("🎬 Send Studio Name:")
+        elif s == "studio":
+            state["studio"] = message.text; state["step"] = "names"
+            await message.reply("👩🏻 Send Actress Names:")
+        elif s == "names":
+            state["names"] = message.text; state["step"] = "link"
+            await message.reply("🔗 Send Link:")
+        elif s == "link":
+            state["link"] = message.text; state["step"] = "channel"
+            await message.reply("📡 Select channel:", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("GB", callback_data="sel_11")]]))
 
     elif m == "indian":
         if s == "description":
@@ -296,6 +338,10 @@ async def select_channel(client, callback_query):
     elif m == "hanime":
         entry["description"] = state["description"]
         entry["episodes"] = state["episodes"]
+    elif m == "gb":
+        entry["description"] = state["description"]
+        entry["studio"] = state["studio"]
+        entry["names"] = state["names"]
     elif m == "indian":
         entry["description"] = state["description"]
         entry["duration"] = state["duration"]
