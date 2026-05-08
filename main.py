@@ -30,11 +30,14 @@ def build_caption(post):
     media = post.get("media", [])
     is_multi = len(media) > 1
 
+    multi_links_standard = f"\n━━━━━━ ✦ ━━━━━━\n<a href='{link}'>🔗 Click to watch 📌</a>\n<a href='{link}'>🔗 Click to watch 📌</a>\n<a href='{link}'>🔗 Click to watch 📌</a>\n━━━━━━ ✦ ━━━━━━"
+    multi_links_read = f"\n━━━━━━ ✦ ━━━━━━\n<a href='{link}'>🔗 Click to Read Now 📌</a>\n<a href='{link}'>🔗 Click to Read Now 📌</a>\n<a href='{link}'>🔗 Click to Read Now 📌</a>\n━━━━━━ ✦ ━━━━━━"
+    multi_links_download = f"\n━━━━━━━━━━━━━━━━━━\n<a href='{link}'>🔗 Download And Watch Link 📌</a>\n<a href='{link}'>🔗 Download And Watch Link 📌</a>\n<a href='{link}'>🔗 Download And Watch Link 📌</a>\n━━━━━━━━━━━━━━━━━━"
+    multi_links_hanime = f"\n━━━━━━ ✦ ━━━━━━\n<a href='{link}'>🔗 Download And Watch Link 📌</a>\n<a href='{link}'>🔗 Download And Watch Link 📌</a>\n<a href='{link}'>🔗 Download And Watch Link 📌</a>\n━━━━━━ ✦ ━━━━━━"
+    multi_links_gb = f"\n✦ ━━━━━━━━━━━━━ ✦\n<a href='{link}'>🔗 Download Media 📌</a>\n<a href='{link}'>🔗 Download Media 📌</a>\n<a href='{link}'>🔗 Download Media 📌</a>\n✦ ━━━━━━━━━━━━━ ✦"
+
     if m == "japanese":
-        if is_multi:
-            link_section = f"\n━━━━━━━━━━━━━━\n<a href='{link}'>Download And Watch Link 📌</a>\n<a href='{link}'>Download And Watch Link 📌</a>\n<a href='{link}'>Download And Watch Link 📌</a>\n━━━━━━━━━━━━━━"
-        else:
-            link_section = ""
+        link_section = multi_links_download if is_multi else ""
         return MODES["japanese"]["caption"].format(
             code=post["code"],
             description=post["description"],
@@ -42,10 +45,7 @@ def build_caption(post):
         )
 
     elif m == "hanime":
-        if is_multi:
-            link_section = f"\n━━━━━━ ✦ ━━━━━━\n<a href='{link}'>🔗 Download And Watch Link 📌</a>\n<a href='{link}'>🔗 Download And Watch Link 📌</a>\n<a href='{link}'>🔗 Download And Watch Link 📌</a>\n━━━━━━ ✦ ━━━━━━"
-        else:
-            link_section = ""
+        link_section = multi_links_hanime if is_multi else ""
         return MODES["hanime"]["caption"].format(
             description=post["description"],
             episodes=post["episodes"],
@@ -53,10 +53,7 @@ def build_caption(post):
         )
 
     elif m == "gb":
-        if is_multi:
-            link_section = f"\n✦ ━━━━━━━━━━━━━ ✦\n<a href='{link}'>🔗 Download Media 📌</a>\n<a href='{link}'>🔗 Download Media 📌</a>\n<a href='{link}'>🔗 Download Media 📌</a>\n✦ ━━━━━━━━━━━━━ ✦"
-        else:
-            link_section = ""
+        link_section = multi_links_gb if is_multi else ""
         return MODES["gb"]["caption"].format(
             description=post["description"],
             studio=post["studio"],
@@ -64,41 +61,76 @@ def build_caption(post):
             link_section=link_section
         )
 
-    elif m in ["cornhwa", "doujinshi"]:
+    elif m == "cornhwa":
+        base = MODES["cornhwa"]["caption"].format(
+            name=post["name"], status=post["status"], chapters=post["chapters"]
+        )
         if is_multi:
-            link_section = f"\n<a href='{link}'>Read Now 🍁📌</a>\n<a href='{link}'>Read Now 🍁📌</a>\n<a href='{link}'>Read Now 🍁📌</a>"
-        else:
-            link_section = ""
-        if m == "cornhwa":
-            return MODES["cornhwa"]["caption"].format(
-                name=post["name"], status=post["status"], chapters=post["chapters"]
-            ) + link_section
-        else:
-            return MODES["doujinshi"]["caption"].format(
-                name=post["name"], pages=post["pages"]
-            ) + link_section
+            # Insert link section before "Provided by"
+            base = base.replace(
+                "Provided by @HeavenFallNetwork",
+                f"{multi_links_read}\n\nProvided by @HeavenFallNetwork"
+            )
+        return base
+
+    elif m == "doujinshi":
+        base = MODES["doujinshi"]["caption"].format(
+            name=post["name"], pages=post["pages"]
+        )
+        if is_multi:
+            base = base.replace(
+                "════════════════════\nProvided by @HeavenFallNetwork\n════════════════════",
+                f"════════════════════\nProvided by @HeavenFallNetwork\n════════════════════{multi_links_read}"
+            )
+        return base
+
+    elif m == "indian":
+        base = MODES["indian"]["caption"].format(
+            description=post["description"], duration=post["duration"]
+        )
+        if is_multi:
+            base = base.replace(
+                "@HeavenFallNetwork 🔞",
+                f"{multi_links_standard}\n\n@HeavenFallNetwork 🔞"
+            )
+        return base
+
+    elif m == "cosplay":
+        base = MODES["cosplay"]["caption"].format(description=post["description"])
+        if is_multi:
+            base = base.replace(
+                "@HeavenFallNetwork",
+                f"{multi_links_standard}\n\n@HeavenFallNetwork"
+            )
+        return base
+
+    elif m == "adult":
+        base = MODES["adult"]["caption"].format(
+            name=post["name"], company=post.get("company", "Premium")
+        )
+        if is_multi:
+            base = base.replace(
+                "@HeavenFallNetwork 🔞",
+                f"{multi_links_standard}\n\n@HeavenFallNetwork 🔞"
+            )
+        return base
+
+    elif m == "onlyfans":
+        base = MODES["onlyfans"]["caption"].format(name=post["name"])
+        if is_multi:
+            base = base.replace(
+                "@HeavenFallNetwork 🔞",
+                f"{multi_links_standard}\n\n@HeavenFallNetwork 🔞"
+            )
+        return base
 
     else:
+        base = MODES[m]["caption"].format(
+            name=post["name"], company=post.get("company", "Premium")
+        )
         if is_multi:
-            link_section = f"\n<a href='{link}'>Click to watch 🍁📌</a>\n<a href='{link}'>Click to watch 🍁📌</a>\n<a href='{link}'>Click to watch 🍁📌</a>"
-        else:
-            link_section = ""
-        if m == "indian":
-            return MODES["indian"]["caption"].format(
-                description=post["description"], duration=post["duration"]
-            ) + link_section
-        elif m == "cosplay":
-            return MODES["cosplay"]["caption"].format(
-                description=post["description"]
-            ) + link_section
-        elif m == "adult":
-            return MODES["adult"]["caption"].format(
-                name=post["name"], company=post.get("company", "Premium")
-            ) + link_section
-        else:
-            return MODES[m]["caption"].format(
-                name=post["name"], company=post.get("company", "Premium")
-            ) + link_section
+            base += multi_links_standard
+        return base
 
 def build_buttons(post):
     m = post["mode"]
@@ -366,16 +398,16 @@ async def select_channel(client, callback_query):
 
 async def posting_logic(client, message):
     try:
-        while True:
+        count = 0
+        while count < 10:
             queue = load_queue()
             if not queue: break
             post = queue.pop(0)
             save_queue(queue)
             await send_post(client, post, message)
-            if load_queue():
+            count += 1
+            if load_queue() and count < 10:
                 await asyncio.sleep(1 * 3600)
-            else:
-                break
         await message.reply("🏁 All posts sent.")
     except asyncio.CancelledError:
         await message.reply("🛑 Posting stopped.")
