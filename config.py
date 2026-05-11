@@ -22,6 +22,20 @@ CHANNELS = {
     "11": {"name": "GB", "id": -1003530152649}
 }
 
+# IST schedule - stored as UTC (IST - 5:30)
+# Each value is (hour_utc, minute_utc)
+CHANNEL_SCHEDULE = {
+    "7":  (4, 30),   # Doujinshi   10:00 AM IST
+    "10": (5, 30),   # Hanime      11:00 AM IST
+    "1":  (6, 30),   # OnlyFans    12:00 PM IST
+    "4":  (7, 30),   # Milfy        1:00 PM IST
+    "3":  (8, 30),   # Intl Corn    2:00 PM IST
+    "8":  (10, 30),  # Cosplay      4:00 PM IST
+    "9":  (11, 30),  # Japanese     5:00 PM IST
+    "11": (12, 30),  # GB           6:00 PM IST
+    "5":  (13, 30),  # Indian       7:00 PM IST
+}
+
 MODES = {
     "onlyfans": {
         "caption": "🌸 {name}\n\n💠 Exclusive VIP Content\nCarefully curated premium drop\n\n━━━━━━━━━━━━━━\nTap the button below to access\n━━━━━━━━━━━━━━\n\n#OnlyFans\n@HeavenFallNetwork 🔞"
