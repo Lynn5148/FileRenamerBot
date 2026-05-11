@@ -1,6 +1,7 @@
 import asyncio
 import json
 import os
+from datetime import datetime, timezone, timedelta
 from pyrogram import Client, filters, enums
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, InputMediaPhoto, InputMediaVideo
 from config import *
@@ -9,9 +10,9 @@ app = Client("bot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
 
 ADMIN_FILTER = filters.user(ADMINS)
 user_state = {}
-posting_task = None
+scheduler_task = None
 DB_FILE = "queue_db.json"
-
+IST = timezone(timedelta(hours=5, minutes=30))
 MULTI_SUPPORT = ["indian", "cornhwa", "japanese", "hanime"]
 
 def load_queue():
@@ -19,12 +20,19 @@ def load_queue():
         try:
             with open(DB_FILE, "r") as f:
                 return json.load(f)
-        except: return []
-    return []
+        except: return {}
+    return {}
 
 def save_queue(queue):
     with open(DB_FILE, "w") as f:
         json.dump(queue, f, indent=4)
+
+def add_to_queue(channel_key, post):
+    queue = load_queue()
+    if channel_key not in queue:
+        queue[channel_key] = []
+    queue[channel_key].append(post)
+    save_queue(queue)
 
 def build_caption(post):
     m = post["mode"]
@@ -43,7 +51,6 @@ def build_caption(post):
             description=post["description"],
             duration=post["duration"]
         )
-
     elif m == "cornhwa":
         if is_multi:
             return MODES["cornhwa"]["multi"].format(
@@ -57,7 +64,6 @@ def build_caption(post):
             status=post["status"],
             chapters=post["chapters"]
         )
-
     elif m == "japanese":
         if is_multi:
             return MODES["japanese"]["multi"].format(
@@ -69,7 +75,6 @@ def build_caption(post):
             code=post["code"],
             description=post["description"]
         )
-
     elif m == "hanime":
         if is_multi:
             return MODES["hanime"]["multi"].format(
@@ -81,30 +86,24 @@ def build_caption(post):
             description=post["description"],
             episodes=post["episodes"]
         )
-
     elif m == "doujinshi":
         return MODES["doujinshi"]["caption"].format(
             name=post["name"], pages=post["pages"]
         )
-
     elif m == "cosplay":
         return MODES["cosplay"]["caption"].format(description=post["description"])
-
     elif m == "adult":
         return MODES["adult"]["caption"].format(
             name=post["name"], company=post.get("company", "Premium")
         )
-
     elif m == "onlyfans":
         return MODES["onlyfans"]["caption"].format(name=post["name"])
-
     elif m == "gb":
         return MODES["gb"]["caption"].format(
             description=post["description"],
             studio=post["studio"],
             names=post["names"]
         )
-
     else:
         return MODES[m]["caption"].format(
             name=post.get("name", ""),
@@ -120,7 +119,7 @@ def build_buttons(post):
         [InlineKeyboardButton("📢 𝗠𝗔𝗜𝗡 𝗖𝗛𝗔𝗡𝗡𝗘𝗟", url="https://t.me/HeavenFallNetwork")]
     ])
 
-async def send_post(client, post, message=None):
+async def send_post(client, post, notify_chat_id=None):
     media_list = post.get("media", [])
     caption = build_caption(post)
     buttons = build_buttons(post)
@@ -160,10 +159,71 @@ async def send_post(client, post, message=None):
             await client.send_media_group(chat_id=chat_id, media=media_group)
 
         await client.send_sticker(chat_id=chat_id, sticker=STICKER_ID)
+        return True
 
     except Exception as e:
-        if message:
-            await message.reply(f"❌ Error: {e}")
+        if notify_chat_id:
+            await client.send_message(notify_chat_id, f"❌ Error sending post: {e}")
+        return False
+
+async def show_preview(client, chat_id, post):
+    media_list = post.get("media", [])
+    caption = build_caption(post)
+    item = media_list[0]
+
+    preview_buttons = InlineKeyboardMarkup([
+        [
+            InlineKeyboardButton("✅ Confirm", callback_data="preview_confirm"),
+            InlineKeyboardButton("❌ Cancel", callback_data="preview_cancel")
+        ]
+    ])
+
+    if item["type"] == "video":
+        await client.send_video(
+            chat_id=chat_id, video=item["file_id"],
+            caption=f"👀 Preview:\n\n{caption}",
+            reply_markup=preview_buttons,
+            parse_mode=enums.ParseMode.HTML
+        )
+    else:
+        await client.send_photo(
+            chat_id=chat_id, photo=item["file_id"],
+            caption=f"👀 Preview:\n\n{caption}",
+            reply_markup=preview_buttons,
+            parse_mode=enums.ParseMode.HTML
+        )
+
+async def scheduler_loop(client, notify_chat_id):
+    global scheduler_task
+    try:
+        while True:
+            now_ist = datetime.now(IST)
+            for channel_key, (utc_hour, utc_minute) in CHANNEL_SCHEDULE.items():
+                scheduled_ist_hour = (utc_hour + 5) % 24
+                scheduled_ist_minute = (utc_minute + 30) % 60
+                if utc_minute + 30 >= 60:
+                    scheduled_ist_hour = (utc_hour + 6) % 24
+
+                if now_ist.hour == scheduled_ist_hour and now_ist.minute == scheduled_ist_minute:
+                    queue = load_queue()
+                    channel_queue = queue.get(channel_key, [])
+                    if channel_queue:
+                        post = channel_queue.pop(0)
+                        queue[channel_key] = channel_queue
+                        save_queue(queue)
+                        success = await send_post(client, post, notify_chat_id)
+                        if success:
+                            ch_name = CHANNELS[channel_key]["name"]
+                            remaining = len(queue.get(channel_key, []))
+                            await client.send_message(
+                                notify_chat_id,
+                                f"✅ Posted to **{ch_name}**\nRemaining in queue: {remaining}"
+                            )
+            await asyncio.sleep(60)
+    except asyncio.CancelledError:
+        pass
+    finally:
+        scheduler_task = None
 
 @app.on_message(filters.command(list(MODES.keys())) & ADMIN_FILTER)
 async def start_creation(client, message):
@@ -343,12 +403,12 @@ async def select_channel(client, callback_query):
     target = CHANNELS[channel_key]
     m = state["mode"]
 
-    queue = load_queue()
     entry = {
         "chat_id": target["id"],
         "media": state["media"],
         "link": state["link"],
-        "mode": m
+        "mode": m,
+        "channel_key": channel_key
     }
 
     if m == "japanese":
@@ -377,82 +437,173 @@ async def select_channel(client, callback_query):
         entry["name"] = state["name"]
         entry["company"] = state.get("company", "Premium")
 
-    queue.append(entry)
-    save_queue(queue)
+    state["pending_entry"] = entry
+    state["pending_channel_key"] = channel_key
+    state["pending_channel_name"] = target["name"]
 
-    await callback_query.message.edit_text(f"✅ Added to Queue for **{target['name']}**.\nFiles: {len(state['media'])} | Total posts: {len(queue)}")
+    await callback_query.message.edit_text("⏳ Generating preview...")
+    await show_preview(client, callback_query.message.chat.id, entry)
+
+@app.on_callback_query(filters.regex(r"^preview_confirm$"))
+async def preview_confirm(client, callback_query):
+    user_id = callback_query.from_user.id
+    state = user_state.get(user_id)
+    if not state or "pending_entry" not in state:
+        await callback_query.answer("Session expired."); return
+
+    entry = state["pending_entry"]
+    channel_key = state["pending_channel_key"]
+    channel_name = state["pending_channel_name"]
+
+    add_to_queue(channel_key, entry)
+    queue = load_queue()
+    remaining = len(queue.get(channel_key, []))
+
+    await callback_query.message.edit_caption(
+        f"✅ Added to **{channel_name}** queue!\nTotal in this channel: {remaining}"
+    )
     user_state.pop(user_id, None)
 
-async def posting_logic(client, message):
-    try:
-        count = 0
-        while count < 10:
-            queue = load_queue()
-            if not queue: break
-            post = queue.pop(0)
-            save_queue(queue)
-            await send_post(client, post, message)
-            count += 1
-            if load_queue() and count < 10:
-                await asyncio.sleep(1 * 3600)
-        await message.reply("🏁 All posts sent.")
-    except asyncio.CancelledError:
-        await message.reply("🛑 Posting stopped.")
-    finally:
-        global posting_task
-        posting_task = None
+@app.on_callback_query(filters.regex(r"^preview_cancel$"))
+async def preview_cancel(client, callback_query):
+    user_id = callback_query.from_user.id
+    await callback_query.message.edit_caption("❌ Cancelled. Start again with the mode command.")
+    user_state.pop(user_id, None)
 
 @app.on_message(filters.command("post") & ADMIN_FILTER)
 async def start_post(client, message):
-    global posting_task
-    if posting_task:
-        await message.reply("⏳ Already running."); return
-    if not load_queue():
-        await message.reply("📭 Empty."); return
-    await message.reply("🚀 Starting Auto-Post...")
-    posting_task = asyncio.create_task(posting_logic(client, message))
+    global scheduler_task
+    if scheduler_task:
+        await message.reply("⏳ Scheduler already running."); return
+    await message.reply("🚀 Scheduler started! Posts will be sent daily at their scheduled times.")
+    scheduler_task = asyncio.create_task(scheduler_loop(client, message.chat.id))
 
-@app.on_message(filters.command("clearall") & ADMIN_FILTER)
-async def clear_all_queue(client, message):
-    global posting_task
-    if posting_task: posting_task.cancel(); posting_task = None
-    save_queue([]); user_state.clear()
-    await message.reply("💥 **SYSTEM RESET COMPLETE**")
+@app.on_message(filters.command("stop") & ADMIN_FILTER)
+async def stop_post(client, message):
+    global scheduler_task
+    if scheduler_task:
+        scheduler_task.cancel()
+        scheduler_task = None
+        await message.reply("🛑 Scheduler stopped.")
+    else:
+        await message.reply("⚪ Scheduler is not running.")
 
 @app.on_message(filters.command("sendnow") & ADMIN_FILTER)
 async def send_now(client, message):
     queue = load_queue()
     if not queue:
-        await message.reply("📭 Queue is empty.")
-        return
-    post = queue.pop(0)
+        await message.reply("📭 All queues are empty."); return
+
+    btns = []
+    for channel_key, posts in queue.items():
+        if posts:
+            ch_name = CHANNELS[channel_key]["name"]
+            btns.append([InlineKeyboardButton(
+                f"{ch_name} ({len(posts)})",
+                callback_data=f"sendnow_{channel_key}"
+            )])
+
+    if not btns:
+        await message.reply("📭 All queues are empty."); return
+
+    await message.reply(
+        "📡 Select channel to send now:",
+        reply_markup=InlineKeyboardMarkup(btns)
+    )
+
+@app.on_callback_query(filters.regex(r"^sendnow_"))
+async def sendnow_channel(client, callback_query):
+    channel_key = callback_query.data.split("_")[1]
+    queue = load_queue()
+    channel_queue = queue.get(channel_key, [])
+
+    if not channel_queue:
+        await callback_query.answer("Queue empty for this channel."); return
+
+    post = channel_queue.pop(0)
+    queue[channel_key] = channel_queue
     save_queue(queue)
-    await send_post(client, post, message)
-    await message.reply("✅ **Sent Now!**")
+
+    await callback_query.message.edit_text(f"⏳ Sending to {CHANNELS[channel_key]['name']}...")
+    success = await send_post(client, post, callback_query.message.chat.id)
+    if success:
+        await callback_query.message.edit_text(
+            f"✅ Sent to **{CHANNELS[channel_key]['name']}**!\nRemaining: {len(channel_queue)}"
+        )
+
+@app.on_message(filters.command("clearall") & ADMIN_FILTER)
+async def clear_all_queue(client, message):
+    global scheduler_task
+    if scheduler_task: scheduler_task.cancel(); scheduler_task = None
+    save_queue({})
+    user_state.clear()
+    await message.reply("💥 **SYSTEM RESET COMPLETE**")
 
 @app.on_message(filters.command("view") & ADMIN_FILTER)
 async def view_queue(client, message):
     queue = load_queue()
-    if not queue: await message.reply("📭 Empty."); return
-    text = "📂 **Queue:**\n\n"
-    btns = [[InlineKeyboardButton(f"❌ Del {i+1}", callback_data=f"del_{i}")] for i in range(len(queue))]
-    for i, item in enumerate(queue): text += f"{i+1}. {item['mode'].upper()} | Files: {len(item.get('media', []))}\n"
+    if not queue:
+        await message.reply("📭 All queues empty."); return
+
+    text = "📂 **Queue Status:**\n\n"
+    has_posts = False
+    for channel_key, posts in queue.items():
+        if posts:
+            has_posts = True
+            ch_name = CHANNELS[channel_key]["name"]
+            utc_h, utc_m = CHANNEL_SCHEDULE.get(channel_key, (0, 0))
+            ist_h = (utc_h + 5) % 24
+            ist_m = (utc_m + 30) % 60
+            if utc_m + 30 >= 60:
+                ist_h = (utc_h + 6) % 24
+            text += f"📌 {ch_name}: {len(posts)} posts | ⏰ {ist_h:02d}:{ist_m:02d} IST\n"
+
+    if not has_posts:
+        await message.reply("📭 All queues empty."); return
+
+    btns = []
+    for channel_key, posts in queue.items():
+        if posts:
+            btns.append([InlineKeyboardButton(
+                f"❌ Clear {CHANNELS[channel_key]['name']}",
+                callback_data=f"clearq_{channel_key}"
+            )])
+
     await message.reply(text, reply_markup=InlineKeyboardMarkup(btns))
 
-@app.on_callback_query(filters.regex(r"^del_"))
-async def delete_item(client, callback_query):
-    idx = int(callback_query.data.split("_")[1])
+@app.on_callback_query(filters.regex(r"^clearq_"))
+async def clear_channel_queue(client, callback_query):
+    channel_key = callback_query.data.split("_")[1]
     queue = load_queue()
-    if idx < len(queue):
-        queue.pop(idx); save_queue(queue)
-        await callback_query.answer("🗑️ Deleted!")
-        await view_queue(client, callback_query.message)
+    queue[channel_key] = []
+    save_queue(queue)
+    ch_name = CHANNELS[channel_key]["name"]
+    await callback_query.answer(f"✅ {ch_name} queue cleared!")
+    await view_queue(client, callback_query.message)
 
 @app.on_message(filters.command("status") & ADMIN_FILTER)
 async def status_cmd(client, message):
     queue = load_queue()
-    status = "RUNNING 🟢" if posting_task else "IDLE ⚪"
-    await message.reply(f"📊 Queue: {len(queue)}\nStatus: {status}")
+    status = "RUNNING 🟢" if scheduler_task else "IDLE ⚪"
+    total = sum(len(v) for v in queue.values())
+    now_ist = datetime.now(IST)
+
+    text = f"📊 **Bot Status**\n\n"
+    text += f"Scheduler: {status}\n"
+    text += f"Total queued posts: {total}\n"
+    text += f"Current IST time: {now_ist.strftime('%I:%M %p')}\n\n"
+    text += "**Per channel:**\n"
+
+    for channel_key, (utc_h, utc_m) in CHANNEL_SCHEDULE.items():
+        ist_h = (utc_h + 5) % 24
+        ist_m = (utc_m + 30) % 60
+        if utc_m + 30 >= 60:
+            ist_h = (utc_h + 6) % 24
+        ch_name = CHANNELS[channel_key]["name"]
+        count = len(queue.get(channel_key, []))
+        text += f"• {ch_name}: {count} posts | {ist_h:02d}:{ist_m:02d} IST\n"
+
+    await message.reply(text)
 
 print("Bot is Alive...")
 app.run()
